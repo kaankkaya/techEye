@@ -1,5 +1,11 @@
 # TechEye — CLAUDE.md
 
+> **Agent prensipleri ve metodları için → [`AGENTS.md`](./AGENTS.md)**
+> Bu projede çalışan her agent'ın nasıl davranması gerektiğini, hangi metodları kullandığını ve kısıtlamalarını `AGENTS.md` tanımlar. Kod yazarken veya mimari karar alırken o dosyayı referans al.
+
+> **Uygulama tasarımı ve iş mantığı için → [`PROD_SPEC.md`](./PROD_SPEC.md)**
+> Ekranlar, bileşen davranışları, renk sistemi, detection logic, API entegrasyonu ve TTS davranışı `PROD_SPEC.md` içinde tanımlıdır. React Native kodu yazılırken bu dosya birincil referanstır — `PROD_SPEC.md`'de tanımlı olmayan hiçbir tasarım kararı veya iş mantığı eklenmez.
+
 ## Project Overview
 
 **TechEye** is a social responsibility project designed to assist visually impaired individuals. The app uses the device's camera combined with AI-powered object detection to identify nearby objects and people, then announces them aloud via text-to-speech in natural, contextual English sentences (e.g., *"There is a person in front of you"*, *"A car is approaching on your right"*).

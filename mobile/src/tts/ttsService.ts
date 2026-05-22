@@ -14,7 +14,7 @@ export async function speak(text: string, objectClass?: string): Promise<void> {
   lastSpokenAt[key] = now;
 
   Speech.speak(text, {
-    language: 'en-US',
+    language: 'tr-TR',
     rate: 0.9,
     pitch: 1.0,
   });

@@ -20,7 +20,7 @@ const DETECTION_INTERVAL_MS = 1000;
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [isScanning, setIsScanning] = useState(false);
-  const [statusText, setStatusText] = useState('Tap Start to begin scanning');
+  const [statusText, setStatusText] = useState('Başlamak için Tara\'ya basın');
   const cameraRef = useRef<CameraView>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -28,45 +28,65 @@ export default function CameraScreen() {
     if (!cameraRef.current) return;
 
     try {
+      console.log('[TechEye] Capturing frame...');
       const photo = await cameraRef.current.takePictureAsync({
         base64: true,
         quality: 0.4,
         skipProcessing: true,
+        shutterSound: false,
       });
 
-      if (!photo?.base64 || !photo.width || !photo.height) return;
+      if (!photo?.base64 || !photo.width || !photo.height) {
+        console.warn('[TechEye] Frame capture returned empty result');
+        return;
+      }
 
+      console.log(`[TechEye] Frame captured (${photo.width}x${photo.height}), sending to API...`);
       const detected = await detectObjects(photo.base64, photo.width, photo.height);
+      console.log(`[TechEye] API returned ${detected.length} detection(s):`, detected.map(d => `${d.label} (${(d.confidence * 100).toFixed(1)}%)`).join(', ') || 'none');
+
       const close = detected.filter(isCloseEnough);
       const sorted = prioritizeDetections(close);
 
       if (sorted.length > 0) {
         const top = sorted[0];
         const message = buildAnnouncement(top);
+        console.log(`[TechEye] Announcing: "${message}"`);
         setStatusText(message);
         await speak(message, top.label);
+      } else {
+        console.log('[TechEye] No nearby objects detected, skipping announcement');
       }
-    } catch {
-      // Silent failure — never crash the detection loop
+    } catch (err: any) {
+      const isNetworkError = err?.message?.toLowerCase().includes('network') ||
+        err?.message?.toLowerCase().includes('hostname') ||
+        err?.message?.toLowerCase().includes('fetch failed');
+      const displayMsg = isNetworkError
+        ? 'Ağ hatası — internet bağlantısını kontrol edin'
+        : 'Algılama hatası — yeniden deneniyor…';
+      console.error('[TechEye] Detection error:', err);
+      setStatusText(displayMsg);
     }
   }, []);
 
   const startScanning = useCallback(() => {
+    console.log('[TechEye] Scanning session started');
     setIsScanning(true);
-    setStatusText('Scanning…');
-    speak('Scanning started');
+    setStatusText('Taranıyor…');
+    speak('Tarama başladı');
     intervalRef.current = setInterval(runDetection, DETECTION_INTERVAL_MS);
   }, [runDetection]);
 
   const stopScanning = useCallback(() => {
+    console.log('[TechEye] Scanning session stopped');
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
     setIsScanning(false);
-    setStatusText('Scanning stopped');
+    setStatusText('Tarama durduruldu');
     stopSpeaking();
-    speak('Scanning stopped');
+    speak('Tarama durduruldu');
   }, []);
 
   useEffect(() => {
@@ -83,15 +103,15 @@ export default function CameraScreen() {
     return (
       <View style={styles.container}>
         <Text style={styles.permissionText}>
-          Camera access is required for TechEye to work.
+          TechEye'ın çalışması için kamera erişimi gereklidir.
         </Text>
         <TouchableOpacity
           style={styles.button}
           onPress={requestPermission}
-          accessibilityLabel="Grant camera permission"
+          accessibilityLabel="Kameraya izin ver"
           accessibilityRole="button"
         >
-          <Text style={styles.buttonText}>Allow Camera</Text>
+          <Text style={styles.buttonText}>Kameraya İzin Ver</Text>
         </TouchableOpacity>
       </View>
     );
@@ -117,11 +137,11 @@ export default function CameraScreen() {
         <TouchableOpacity
           style={[styles.button, isScanning && styles.buttonStop]}
           onPress={isScanning ? stopScanning : startScanning}
-          accessibilityLabel={isScanning ? 'Stop scanning' : 'Start scanning'}
+          accessibilityLabel={isScanning ? 'Taramayı durdur' : 'Taramayı başlat'}
           accessibilityRole="button"
         >
           <Text style={styles.buttonText}>
-            {isScanning ? 'Stop' : 'Start'}
+            {isScanning ? 'Durdur' : 'Tara'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -150,7 +170,7 @@ const styles = StyleSheet.create({
   statusText: {
     color: '#FFFFFF',
     fontSize: 22,
-    fontWeight: '600',
+    fontFamily: 'Inter_600SemiBold',
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 30,
@@ -158,6 +178,7 @@ const styles = StyleSheet.create({
   permissionText: {
     color: '#FFFFFF',
     fontSize: 20,
+    fontFamily: 'Inter_400Regular',
     textAlign: 'center',
     marginHorizontal: 32,
     marginBottom: 32,
@@ -177,6 +198,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#FFFFFF',
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: 'Inter_700Bold',
   },
 });

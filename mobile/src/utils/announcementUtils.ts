@@ -17,13 +17,21 @@ export function buildAnnouncement(obj: DetectedObject): string {
 
   switch (label) {
     case 'person':
-      return 'There is a person in front of you';
+      return 'Önünüzde bir kişi var';
     case 'car':
-      return 'A car is nearby';
+      return 'Yakınınızda bir araba var';
     case 'dog':
-      return 'A dog is approaching';
+      return 'Bir köpek yaklaşıyor';
+    case 'bicycle':
+      return 'Yakınınızda bir bisiklet var';
+    case 'truck':
+      return 'Yakınınızda bir kamyon var';
+    case 'bus':
+      return 'Yakınınızda bir otobüs var';
+    case 'cat':
+      return 'Yakınınızda bir kedi var';
     default:
-      return `There is a ${label} nearby`;
+      return `Yakınınızda bir ${label} var`;
   }
 }
 
