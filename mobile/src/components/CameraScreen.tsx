@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import { detectObjects } from '../detection/detectionService';
+import { initModels } from '../detection/mlPipeline';
 import { speak, stopSpeaking } from '../tts/ttsService';
 import {
   buildAnnouncement,
@@ -36,13 +37,13 @@ export default function CameraScreen() {
         shutterSound: false,
       });
 
-      if (!photo?.base64 || !photo.width || !photo.height) {
+      if (!photo?.uri || !photo.width || !photo.height) {
         console.warn('[TechEye] Frame capture returned empty result');
         return;
       }
 
-      console.log(`[TechEye] Frame captured (${photo.width}x${photo.height}), sending to API...`);
-      const detected = await detectObjects(photo.base64, photo.width, photo.height);
+      console.log(`[TechEye] Frame captured (${photo.width}x${photo.height}), running local ML...`);
+      const detected = await detectObjects(photo.uri, photo.width, photo.height);
       console.log(`[TechEye] API returned ${detected.length} detection(s):`, detected.map(d => `${d.label} (${(d.confidence * 100).toFixed(1)}%)`).join(', ') || 'none');
 
       const close = detected.filter(isCloseEnough);
@@ -69,8 +70,16 @@ export default function CameraScreen() {
     }
   }, []);
 
-  const startScanning = useCallback(() => {
+  const startScanning = useCallback(async () => {
     console.log('[TechEye] Scanning session started');
+    setStatusText('Modeller hazırlanıyor…');
+    try {
+      await initModels();
+    } catch (e) {
+      console.error('[TechEye] Model yükleme hatası:', e);
+      setStatusText('Model yüklenemedi — .onnx dosyaları eksik');
+      return;
+    }
     setIsScanning(true);
     setStatusText('Taranıyor…');
     speak('Tarama başladı');

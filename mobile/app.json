@@ -37,7 +37,8 @@
           "cameraPermission": "TechEye uses the camera to detect nearby objects and people."
         }
       ],
-      "expo-splash-screen"
+      "expo-splash-screen",
+      "expo-asset"
     ]
   }
 }
