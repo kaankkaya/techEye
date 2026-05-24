@@ -15,21 +15,25 @@ const PRIORITY_ORDER = ['person', 'car', 'dog', 'bicycle', 'truck', 'bus', 'cat'
 const PROXIMITY_THRESHOLD = 0.15;
 
 export function buildAnnouncement(obj: DetectedObject): string {
-  const label = obj.label.toLowerCase();
-  const dist  = obj.distanceMeters && obj.distanceMeters > 0
-    ? `${obj.distanceMeters.toFixed(1)} metre uzağınızda `
-    : '';
+  const label   = obj.label.toLowerCase();
+  const hasDistance = obj.distanceMeters != null && obj.distanceMeters > 0;
+  const dist    = hasDistance ? `${obj.distanceMeters!.toFixed(1)} metre uzağınızda ` : '';
 
-  switch (label) {
-    case 'person':   return `${dist}bir kişi var`;
-    case 'car':      return `${dist}bir araba var`;
-    case 'dog':      return `${dist}bir köpek var`;
-    case 'bicycle':  return `${dist}bir bisiklet var`;
-    case 'truck':    return `${dist}bir kamyon var`;
-    case 'bus':      return `${dist}bir otobüs var`;
-    case 'cat':      return `${dist}bir kedi var`;
-    default:         return `${dist}bir ${label} var`;
-  }
+  const labels: Record<string, { tr: string; prefix: string }> = {
+    person:  { tr: 'kişi',     prefix: 'Önünüzde' },
+    car:     { tr: 'araba',    prefix: 'Yakınınızda' },
+    dog:     { tr: 'köpek',    prefix: 'Yakınınızda' },
+    bicycle: { tr: 'bisiklet', prefix: 'Yakınınızda' },
+    truck:   { tr: 'kamyon',   prefix: 'Yakınınızda' },
+    bus:     { tr: 'otobüs',   prefix: 'Yakınınızda' },
+    cat:     { tr: 'kedi',     prefix: 'Yakınınızda' },
+  };
+
+  const entry = labels[label];
+  if (!entry) return `${hasDistance ? dist : 'Yakınınızda '}bir ${label} var`;
+
+  if (hasDistance) return `${dist}bir ${entry.tr} var`;
+  return `${entry.prefix} bir ${entry.tr} var`;
 }
 
 export function isCloseEnough(obj: DetectedObject): boolean {

@@ -31,7 +31,7 @@ export default function CameraScreen() {
     try {
       console.log('[TechEye] Capturing frame...');
       const photo = await cameraRef.current.takePictureAsync({
-        base64: true,
+        base64: false,
         quality: 0.4,
         skipProcessing: true,
         shutterSound: false,
