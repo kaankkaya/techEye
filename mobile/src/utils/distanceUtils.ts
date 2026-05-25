@@ -29,6 +29,21 @@ export function estimateDistanceMeters(
   return Math.round(distance * 10) / 10; // 1 ondalık basamak
 }
 
+export function getDistanceLabel(distanceMeters: number, bboxHeight: number): string {
+  // Büyük bbox → kişi çok yakın, formül güvenilmez (nesne kareye sığmıyor)
+  if (bboxHeight > 0.7) return 'yakın mesafede';
+
+  if (distanceMeters > 0) {
+    if (distanceMeters < 1) return 'yakın mesafede';
+    if (distanceMeters <= 4) return 'orta mesafede';
+    return 'uzakta';
+  }
+
+  // Fallback: yalnızca bbox
+  if (bboxHeight >= 0.3) return 'orta mesafede';
+  return 'uzakta';
+}
+
 export function getRegionDepth(
   depthMap: Float32Array,
   mapWidth: number,

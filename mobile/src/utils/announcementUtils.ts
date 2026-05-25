@@ -1,8 +1,10 @@
+import { getDistanceLabel } from './distanceUtils';
+
 export type DetectedObject = {
   label: string;
   confidence: number;
-  distanceMeters?: number;   // metrik mesafe, -1 = hesaplanamadı
-  relativeDepth?: number;    // DepthAnything relatif değeri
+  distanceMeters?: number;
+  relativeDepth?: number;
   boundingBox?: {
     left: number;
     top: number;
@@ -15,9 +17,9 @@ const PRIORITY_ORDER = ['person', 'car', 'dog', 'bicycle', 'truck', 'bus', 'cat'
 const PROXIMITY_THRESHOLD = 0.15;
 
 export function buildAnnouncement(obj: DetectedObject): string {
-  const label   = obj.label.toLowerCase();
-  const hasDistance = obj.distanceMeters != null && obj.distanceMeters > 0;
-  const dist    = hasDistance ? `${obj.distanceMeters!.toFixed(1)} metre uzağınızda ` : '';
+  const label = obj.label.toLowerCase();
+  const bboxH = obj.boundingBox?.height ?? 0;
+  const distLabel = getDistanceLabel(obj.distanceMeters ?? -1, bboxH);
 
   const labels: Record<string, { tr: string; prefix: string }> = {
     person:  { tr: 'kişi',     prefix: 'Önünüzde' },
@@ -30,10 +32,10 @@ export function buildAnnouncement(obj: DetectedObject): string {
   };
 
   const entry = labels[label];
-  if (!entry) return `${hasDistance ? dist : 'Yakınınızda '}bir ${label} var`;
+  const prefix = entry?.prefix ?? 'Yakınınızda';
+  const tr = entry?.tr ?? label;
 
-  if (hasDistance) return `${dist}bir ${entry.tr} var`;
-  return `${entry.prefix} bir ${entry.tr} var`;
+  return `${prefix} bir ${tr} var, ${distLabel}`;
 }
 
 export function isCloseEnough(obj: DetectedObject): boolean {

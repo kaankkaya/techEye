@@ -4,6 +4,7 @@
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
+    "@expo/vector-icons": "^15.1.1",
     "expo": "~56.0.3",
     "expo-asset": "~56.0.13",
     "expo-camera": "~56.0.7",

@@ -21,13 +21,25 @@ Mobil uygulamanın tasarım sistemi, ekran yapısı, bileşen davranışları ve
 
 ### Renk Paleti
 
-| Token | Hex | Kullanım |
+Tüm renkler `src/theme/colors.ts` içinde token olarak tanımlanır ve `ThemeProvider` / `useTheme()` hook'u aracılığıyla tüketilir. Hardcoded renk kullanılmaz.
+
+| Token | Değer | Kullanım |
 |---|---|---|
-| `background` | `#0A0E1A` | Tüm ekranların arka planı |
-| `overlay` | `rgba(10, 14, 26, 0.75)` | Kamera üzerindeki kontrol paneli |
-| `primary` | `#1A8FE3` | Tara butonu, vurgu rengi |
-| `danger` | `#E3401A` | Durdur butonu |
-| `text` | `#FFFFFF` | Tüm metinler |
+| `background` | `#0F0A08` | Tüm ekranların arka planı |
+| `surface` | `#1A1108` | Kart, panel yüzeyleri |
+| `accent` | `#F97316` | Primary CTA — Tara butonu |
+| `accentPress` | `#EA580C` | Hover / basılı durum |
+| `accentSoft` | `rgba(249, 115, 22, 0.13)` | Tag fill, dev buton arka planı |
+| `danger` | `#DC2626` | Durdur butonu |
+| `border` | `#2A211A` | Hairline çizgiler, ayırıcılar |
+| `overlay` | `rgba(15, 10, 8, 0.75)` | Kamera üzerindeki kontrol paneli (scrim) |
+| `text` | `#FFFFFF` | Birincil metin |
+| `textSecondary` | `rgba(255, 255, 255, 0.6)` | İkincil / yardımcı metin |
+
+**Tema altyapısı:**
+- `src/theme/colors.ts` — token tanımları
+- `src/theme/ThemeContext.tsx` — `ThemeProvider` + `useTheme()` hook
+- `App.tsx` root'unda `ThemeProvider` ile sarılır
 
 ### Tipografi
 
@@ -119,10 +131,10 @@ idle
 
 **Buton durumları:**
 
-| `isScanning` | Renk | Etiket | `accessibilityLabel` |
+| `isScanning` | Renk (token) | Etiket | `accessibilityLabel` |
 |---|---|---|---|
-| `false` | `#1A8FE3` | `"Tara"` | `"Taramayı başlat"` |
-| `true` | `#E3401A` | `"Durdur"` | `"Taramayı durdur"` |
+| `false` | `accent` (#F97316) | `"Tara"` | `"Taramayı başlat"` |
+| `true` | `danger` (#DC2626) | `"Durdur"` | `"Taramayı durdur"` |
 
 **Overlay:** `position: absolute`, ekranın altına sabitlenmiş, `paddingBottom: 48`, `paddingHorizontal: 24`.
 

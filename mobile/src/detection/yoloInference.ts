@@ -2,7 +2,7 @@ import { Asset } from 'expo-asset';
 import { InferenceSession, Tensor } from 'onnxruntime-react-native';
 import { prepareImageTensor } from './imagePreprocessor';
 
-const YOLO_INPUT_SIZE = 320;
+export const YOLO_INPUT_SIZE = 320;
 const CONF_THRESHOLD  = 0.45;
 const IOU_THRESHOLD   = 0.45;
 
@@ -44,7 +44,14 @@ export async function runYolo(imageUri: string): Promise<YoloDetection[]> {
   const inputData = await prepareImageTensor(imageUri, YOLO_INPUT_SIZE, YOLO_INPUT_SIZE);
   const inputTensor = new Tensor('float32', inputData, [1, 3, YOLO_INPUT_SIZE, YOLO_INPUT_SIZE]);
 
-  const results = await _session!.run({ images: inputTensor });
+  let results;
+  try {
+    results = await _session!.run({ images: inputTensor });
+  } catch {
+    return [];
+  }
+
+  if (!results['output0']) return [];
   const output = results['output0'].data as Float32Array;
 
   // Output shape: [1, 84, 2100] → flat index: feature * NUM_ANCHORS + anchor

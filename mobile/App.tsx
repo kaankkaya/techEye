@@ -8,6 +8,7 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
 import CameraScreen from './src/components/CameraScreen';
+import { ThemeProvider } from './src/theme/ThemeContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,9 +28,9 @@ export default function App() {
   if (!fontsLoaded) return null;
 
   return (
-    <>
+    <ThemeProvider>
       <StatusBar style="light" />
       <CameraScreen />
-    </>
+    </ThemeProvider>
   );
 }
