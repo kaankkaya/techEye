@@ -71,18 +71,14 @@ def ensure_deps():
 
 
 def run_ios(device_line):
-    # UDID'yi satirdan cikar: son parantez icindeki 40 karakter hex
     import re
     match = re.search(r'\(([0-9A-Fa-f-]{25,})\)', device_line)
-    udid_flag = f"--udid {match.group(1)}" if match else "--device"
+    device_flag = f"--device {match.group(1)}" if match else "--device"
 
     print(f"\n[*] iOS cihazinda baslatiliyor: {device_line}")
-    cmd = f"npx expo run:ios {udid_flag}"
+    cmd = f"npx expo run:ios {device_flag}"
     print(f"    > {cmd}\n")
-    os.execlp("npm", "npm", "run", "--prefix", MOBILE_DIR,
-              "--", "ios")  # fallback
-    # execlp yerine dogrudan calistir
-    subprocess.run(f"cd '{MOBILE_DIR}' && {cmd}", shell=True)
+    subprocess.run(cmd, shell=True, cwd=MOBILE_DIR)
 
 
 def run_android(serial):

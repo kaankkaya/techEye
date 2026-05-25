@@ -65,9 +65,50 @@ Minimum body font size: **18sp**. Font yükleme tamamlanana kadar `SplashScreen`
 
 Butonlar `accessibilityRole="button"` ve `accessibilityLabel` içerir.
 
+Tüm butonlar `HapticButton` komponenti ile sarılır (`src/components/HapticButton.tsx`). Haptic feedback tek merkezden yönetilir; varsayılan yoğunluk `medium`, DEV toggle butonu `selection` kullanır.
+
 ---
 
 ## Ekranlar
+
+### 0. Ses Seçim Ekranı (`VoicePickerScreen`)
+
+**Tetikleyici:** Her uygulama açılışında, `CameraScreen`'den önce gösterilir.
+
+**Amaç:** Kullanıcının cihazında yüklü Türkçe TTS seslerinden birini seçmesine izin verir. Seçim `AsyncStorage`'a kaydedilir; bir sonraki açılışta aynı ses ön seçili gelir.
+
+**Elemanlar:**
+
+| Eleman | Açıklama |
+|---|---|
+| İkon | `FontAwesome6 eye-low-vision`, `accent` rengi |
+| Başlık | `"Ses Seç"` — `Inter_700Bold` 28px |
+| Alt başlık | `"TechEye'ın kullanacağı Türkçe sesi seçin. / Sesleri dinlemek için ▶ tuşuna basın."` |
+| Ayarlar linki | `"Diğer seslere göz at"` — altı çizili, `textSecondary`, tıklanınca iOS Erişilebilirlik ayarlarını açar (`App-prefs:root=ACCESSIBILITY`) |
+| Ses listesi | `FlatList` — Enhanced sesler üstte, her satırda isim + dil + Enhanced rozeti |
+| ▶ butonu | Her ses satırında; tıklanınca `PREVIEW_TEXT` ile önizleme yapar, yüklenirken `ActivityIndicator` gösterir |
+| Seçim göstergesi | Seçili satırda `FontAwesome6 circle-check` ikonu + `accentSoft` arka plan + `accent` kenarlık |
+| "Atla" butonu | Kayıt yapmaz, mevcut sesle devam eder |
+| "Seç ve Devam Et" butonu | Seçili sesi `AsyncStorage`'a kaydeder, `CameraScreen`'e geçer |
+
+**Ses sıralama kuralı:** `VoiceQuality.Enhanced` → önce; aynı kalitede alfabetik.
+
+**Boş durum:** Cihazda Türkçe ses yoksa `"Cihazda yüklü Türkçe ses bulunamadı…"` mesajı gösterilir.
+
+**Persistence:** `@react-native-async-storage/async-storage` — anahtar: `@techeye/selected_voice`. Ses identifier'ı string olarak saklanır.
+
+**App akışı:**
+```
+App açılır
+    │
+    ├─ VoicePickerScreen (her açılışta)
+    │       ├─ "Seç ve Devam Et" → ses kaydedilir → CameraScreen
+    │       └─ "Atla"            → ses değişmez   → CameraScreen
+    │
+    └─ CameraScreen
+```
+
+---
 
 ### 1. Kamera İzni Ekranı
 
@@ -302,6 +343,12 @@ URI → expo-image-manipulator → resize (target × target) → JPEG base64
 - Cooldown: Her `objectClass` için bağımsız `4000ms`
 - Cooldown dolmadıysa aynı label için duyuru yapılmaz
 
+**Ses seçimi:**
+- `initTTS()` uygulama açılışında (`App.tsx`) çağrılır; `AsyncStorage`'dan kayıtlı ses identifier'ını yükler
+- `VoicePickerScreen`'de seçilen ses `saveVoice(identifier)` ile kaydedilir ve `activeVoiceId` güncellenir
+- Kayıtlı ses varsa `Speech.speak()` çağrılarına `voice: activeVoiceId` eklenir; yoksa platform default'u kullanılır
+- `getTurkishVoices()` → `Speech.getAvailableVoicesAsync()` çıktısından `tr` dil kodlu sesler filtrelenir
+
 **Duyuru formatı (mesafeli):**
 
 | Label | Mesafe biliniyorsa | Mesafe bilinmiyorsa |
@@ -353,6 +400,8 @@ Oturum başlangıcı: `"Tarama başladı"` — Bitiş: `"Tarama durduruldu"`
 | `@expo-google-fonts/inter` | Inter font ailesi |
 | `onnxruntime-react-native` | YOLO + Depth ONNX model çalıştırma |
 | `jpeg-js` | JPEG base64 → RGBA piksel decode |
+| `@react-native-async-storage/async-storage` | Seçilen TTS ses identifier'ını kalıcı olarak saklar |
+| `expo-haptics` | Buton haptic feedback — `HapticButton` komponenti üzerinden merkezi yönetim |
 
 ---
 
@@ -371,7 +420,7 @@ techeye/
 ├── PROD_SPEC.md
 └── mobile/
     ├── metro.config.js                  # .onnx asset extension
-    ├── App.tsx                          # Root — Inter font yükleme + SplashScreen
+    ├── App.tsx                          # Root — Inter font yükleme + SplashScreen + ekran yönlendirme
     ├── MLModels/
     │   ├── yolo11n.pt                   # Kaynak (dönüştürme için)
     │   ├── yolo11n.onnx                 # ← React Native kullanır (10MB)
@@ -379,6 +428,8 @@ techeye/
     │   └── depth_anything_v2_vits.onnx  # ← React Native kullanır (95MB, tek dosya)
     ├── src/
     │   ├── components/
+    │   │   ├── HapticButton.tsx         # TouchableOpacity wrapper — merkezi haptic feedback
+    │   │   ├── VoicePickerScreen.tsx    # Açılış ses seçim ekranı (AsyncStorage persist)
     │   │   └── CameraScreen.tsx         # Ana ekran + tarama döngüsü
     │   ├── detection/
     │   │   ├── imagePreprocessor.ts     # URI → CHW Float32Array (jpeg-js)

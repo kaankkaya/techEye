@@ -3,9 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
+import HapticButton from './HapticButton';
 import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import { detectObjects } from '../detection/detectionService';
 import { initModels } from '../detection/mlPipeline';
@@ -18,6 +18,7 @@ import {
 } from '../utils/announcementUtils';
 import { useTheme } from '../theme/ThemeContext';
 import { FontAwesome6 } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 const DETECTION_INTERVAL_MS = 1000;
 
@@ -157,14 +158,14 @@ export default function CameraScreen() {
         <Text style={[styles.permissionText, { color: theme.text }]}>
           TechEye'ın çalışması için kamera erişimi gereklidir.
         </Text>
-        <TouchableOpacity
+        <HapticButton
           style={[styles.button, { backgroundColor: theme.accent }]}
           onPress={requestPermission}
           accessibilityLabel="Kameraya izin ver"
           accessibilityRole="button"
         >
           <Text style={[styles.buttonText, { color: theme.text }]}>Kameraya İzin Ver</Text>
-        </TouchableOpacity>
+        </HapticButton>
       </View>
     );
   }
@@ -211,7 +212,7 @@ export default function CameraScreen() {
       )}
 
       {/* Dev mode toggle — sağ üst köşe */}
-      <TouchableOpacity
+      <HapticButton
         style={[
           styles.devButton,
           { borderColor: theme.border, backgroundColor: theme.accentSoft },
@@ -223,7 +224,7 @@ export default function CameraScreen() {
         <Text style={[styles.devButtonText, { color: devMode ? theme.accent : theme.textSecondary }]}>
           DEV
         </Text>
-      </TouchableOpacity>
+      </HapticButton>
 
       <View style={[styles.overlay, { backgroundColor: theme.overlay }]}>
         <FontAwesome6
@@ -240,7 +241,7 @@ export default function CameraScreen() {
           {statusText}
         </Text>
 
-        <TouchableOpacity
+        <HapticButton
           style={[
             styles.button,
             { backgroundColor: isScanning ? theme.danger : theme.accent },
@@ -253,7 +254,7 @@ export default function CameraScreen() {
           <Text style={[styles.buttonText, { color: theme.text }]}>
             {isScanning ? 'Durdur' : 'Tara'}
           </Text>
-        </TouchableOpacity>
+        </HapticButton>
       </View>
     </View>
   );
