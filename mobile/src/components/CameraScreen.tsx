@@ -1,11 +1,11 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
 import HapticButton from './HapticButton';
+import AppText from './AppText';
 import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import { detectObjects } from '../detection/detectionService';
 import { initModels } from '../detection/mlPipeline';
@@ -18,7 +18,6 @@ import {
 } from '../utils/announcementUtils';
 import { useTheme } from '../theme/ThemeContext';
 import { FontAwesome6 } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
 const DETECTION_INTERVAL_MS = 1000;
 
@@ -140,7 +139,6 @@ export default function CameraScreen() {
     if (!next) setDebugDetections([]);
   }, []);
 
-
   useEffect(() => {
     return () => {
       scanningRef.current = false;
@@ -155,16 +153,18 @@ export default function CameraScreen() {
   if (!permission.granted) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <Text style={[styles.permissionText, { color: theme.text }]}>
+        <AppText size={20} style={[styles.permissionText, { color: theme.text }]}>
           TechEye'ın çalışması için kamera erişimi gereklidir.
-        </Text>
+        </AppText>
         <HapticButton
           style={[styles.button, { backgroundColor: theme.accent }]}
           onPress={requestPermission}
           accessibilityLabel="Kameraya izin ver"
           accessibilityRole="button"
         >
-          <Text style={[styles.buttonText, { color: theme.text }]}>Kameraya İzin Ver</Text>
+          <AppText weight="bold" size={22} style={{ color: theme.text }}>
+            Kameraya İzin Ver
+          </AppText>
         </HapticButton>
       </View>
     );
@@ -179,7 +179,6 @@ export default function CameraScreen() {
         onCameraReady={() => { cameraReady.current = true; }}
       />
 
-      {/* Bounding box overlay — sadece dev mode açıkken */}
       {devMode && (
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
           {debugDetections.map((det, i) => {
@@ -201,9 +200,9 @@ export default function CameraScreen() {
                 }]}
               >
                 <View style={[styles.bboxLabel, { backgroundColor: color }]}>
-                  <Text style={styles.bboxLabelText}>
+                  <AppText weight="bold" size={11} style={{ color: '#000000' }}>
                     {det.label}  {(det.confidence * 100).toFixed(0)}%  {distLabel}
-                  </Text>
+                  </AppText>
                 </View>
               </View>
             );
@@ -211,19 +210,19 @@ export default function CameraScreen() {
         </View>
       )}
 
-      {/* Dev mode toggle — sağ üst köşe */}
       <HapticButton
+        haptic="selection"
         style={[
           styles.devButton,
           { borderColor: theme.border, backgroundColor: theme.accentSoft },
-          devMode && { borderColor: theme.accent, backgroundColor: theme.accentSoft },
+          devMode && { borderColor: theme.accent },
         ]}
         onPress={toggleDevMode}
         accessibilityLabel="Dev mode toggle"
       >
-        <Text style={[styles.devButtonText, { color: devMode ? theme.accent : theme.textSecondary }]}>
+        <AppText weight="bold" size={12} style={[styles.devButtonText, { color: devMode ? theme.accent : theme.textSecondary }]}>
           DEV
-        </Text>
+        </AppText>
       </HapticButton>
 
       <View style={[styles.overlay, { backgroundColor: theme.overlay }]}>
@@ -233,13 +232,15 @@ export default function CameraScreen() {
           color={theme.accent}
           style={styles.appIcon}
         />
-        <Text
+        <AppText
+          weight="bold"
+          size={22}
           style={[styles.statusText, { color: theme.text }]}
           accessibilityLiveRegion="polite"
           accessibilityLabel={statusText}
         >
           {statusText}
-        </Text>
+        </AppText>
 
         <HapticButton
           style={[
@@ -251,9 +252,9 @@ export default function CameraScreen() {
           accessibilityRole="button"
           onPressIn={() => {}}
         >
-          <Text style={[styles.buttonText, { color: theme.text }]}>
+          <AppText weight="bold" size={22} style={{ color: theme.text }}>
             {isScanning ? 'Durdur' : 'Tara'}
-          </Text>
+          </AppText>
         </HapticButton>
       </View>
     </View>
@@ -261,12 +262,8 @@ export default function CameraScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  camera: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+  camera: { flex: 1 },
   overlay: {
     position: 'absolute',
     bottom: 0,
@@ -277,19 +274,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     alignItems: 'center',
   },
-  appIcon: {
-    marginBottom: 16,
-  },
+  appIcon: { marginBottom: 16 },
   statusText: {
-    fontSize: 22,
-    fontFamily: 'Inter_600SemiBold',
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 30,
   },
   permissionText: {
-    fontSize: 20,
-    fontFamily: 'Inter_400Regular',
     textAlign: 'center',
     marginHorizontal: 32,
     marginBottom: 32,
@@ -298,13 +289,9 @@ const styles = StyleSheet.create({
   button: {
     width: 160,
     height: 64,
-    borderRadius: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  buttonText: {
-    fontSize: 22,
-    fontFamily: 'Inter_700Bold',
   },
   devButton: {
     position: 'absolute',
@@ -315,11 +302,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1.5,
   },
-  devButtonText: {
-    fontSize: 12,
-    fontFamily: 'Inter_700Bold',
-    letterSpacing: 1,
-  },
+  devButtonText: { letterSpacing: 1 },
   bbox: {
     position: 'absolute',
     borderWidth: 2,
@@ -332,10 +315,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
-  },
-  bboxLabelText: {
-    color: '#000000',
-    fontSize: 11,
-    fontFamily: 'Inter_700Bold',
   },
 });

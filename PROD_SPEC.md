@@ -60,7 +60,7 @@ Minimum body font size: **18sp**. Font yükleme tamamlanana kadar `SplashScreen`
 |---|---|
 | Genişlik | 160dp |
 | Yükseklik | 64dp |
-| Border radius | 32dp (tam yuvarlak) |
+| Border radius | 16dp |
 | Min tap target | 64×64dp |
 
 Butonlar `accessibilityRole="button"` ve `accessibilityLabel` içerir.
