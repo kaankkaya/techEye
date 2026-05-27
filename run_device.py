@@ -108,7 +108,8 @@ def run_ios(device_line):
 
     env = os.environ.copy()
     env["REACT_NATIVE_PACKAGER_HOSTNAME"] = local_ip
-    subprocess.run(cmd, shell=True, cwd=MOBILE_DIR, env=env)
+    result = subprocess.run(cmd, shell=True, cwd=MOBILE_DIR, env=env)
+    sys.exit(result.returncode)
 
 
 def run_android(serial):
@@ -117,7 +118,8 @@ def run_android(serial):
     env["ANDROID_SERIAL"] = serial
     cmd = "npx expo run:android --device"
     print(f"    > {cmd}\n")
-    subprocess.run(cmd, shell=True, cwd=MOBILE_DIR, env=env)
+    result = subprocess.run(cmd, shell=True, cwd=MOBILE_DIR, env=env)
+    sys.exit(result.returncode)
 
 
 def fix_path():

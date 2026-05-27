@@ -203,9 +203,10 @@ idle
 | "GENEL" bölümü | `FontAwesome6 sliders` + `"GENEL"` etiketi |
 | Birim satırı | `FontAwesome6 ruler` ikonu — sol: "Birim" etiketi; sağ: seçili birim adı + chevron. Tıklanınca picker açılır |
 | Birim picker | Saydam arka plan üstünde küçük kart modal — "Birim Seç" başlığı + "Metre" / "Adım" seçenekleri + seçili olan yanında `check` ikonu. Dışına tıklanınca kapanır |
+| Titreşim satırı | `FontAwesome6 hand-pointer` ikonu — "Titreşim" başlığı + "Yakın nesne uyarısı" alt metni + `Switch` toggle. Değişiklik anında kaydedilir |
 | "SES" bölümü | `FontAwesome6 microphone` + `"SES"` etiketi |
 | Ses listesi | `VoicePickerScreen` ile aynı satır yapısı: isim, Enhanced rozeti, ▶ önizleme |
-| Seçim davranışı | Birim veya ses seçildiğinde **anında** kaydedilir, ayrı onay butonu yoktur |
+| Seçim davranışı | Tüm ayarlar değiştiğinde **anında** kaydedilir, ayrı onay butonu yoktur |
 | Kapat | Header'daki `xmark` veya modal dışına basınca kapanır |
 
 **Birim davranışı:**
@@ -221,7 +222,7 @@ idle
 - Seçilen birim `AsyncStorage`'a kaydedilir — anahtar: `@techeye/distance_unit`
 - `initUnit()` uygulama açılışında `App.tsx`'te çağrılır (`initTTS()` ile birlikte)
 
-**Not:** `VoicePickerScreen` (açılış akışı) ile `SettingsScreen` (ayarlar) ayrı bileşenlerdir; ikisi de aynı `ttsService` / `unitService` metotlarını kullanır.
+**Not:** `VoicePickerScreen` (açılış akışı) ile `SettingsScreen` (ayarlar) ayrı bileşenlerdir; ikisi de aynı `ttsService` / `unitService` / `proximityHaptics` metotlarını kullanır.
 
 ---
 
@@ -416,6 +417,36 @@ Oturum başlangıcı: `"Tarama başladı"` — Bitiş: `"Tarama durduruldu"`
 
 ---
 
+## Yakınlık Haptic Feedback
+
+Her detection döngüsünde tespit edilen tüm nesneler `evaluateProximityHaptics(objects)` fonksiyonuna iletilir. Fonksiyon, aşağıdaki kurallara göre titreşim tetikler.
+
+### Kurallar
+
+| Kural | Koşul | Titreşim | Yoğunluk |
+|---|---|---|---|
+| Danger | `person` veya `car` → `distanceMeters < 1` | 3 × darbe | `Heavy` |
+| Warning | `car` → `1 ≤ distanceMeters ≤ 2` | 2 × darbe | `Medium` |
+
+- Her iki kural için bağımsız **3 saniyelik cooldown** uygulanır.
+- **Danger, Warning'e göre önceliklidir** — aynı döngüde ikisi birden tetiklenmez.
+- Titreşimler arası gecikme: **130 ms**.
+- Kullanıcı Ayarlar ekranından titreşimi tamamen kapatabilir (Switch toggle).
+
+### Persistence
+
+| Anahtar | Değer | Varsayılan |
+|---|---|---|
+| `@techeye/haptic_enabled` | `"true"` / `"false"` | `"true"` (açık) |
+
+`initHaptics()` uygulama açılışında `App.tsx`'te çağrılır.
+
+### Dosya
+
+`src/utils/proximityHaptics.ts` — kural motoru, AsyncStorage persist, `evaluateProximityHaptics()`.
+
+---
+
 ## Fotoğraf Çekme
 
 | Parametre | Değer |
@@ -495,7 +526,8 @@ techeye/
     │   └── utils/
     │       ├── announcementUtils.ts     # DetectedObject tipi, buildAnnouncement (unitService kullanır)
     │       ├── distanceUtils.ts         # Pinhole mesafe + depth medyan
-    │       └── unitService.ts           # Birim (metre/adım) — AsyncStorage persist, formatDistance()
+    │       ├── unitService.ts           # Birim (metre/adım) — AsyncStorage persist, formatDistance()
+    │       └── proximityHaptics.ts      # Yakınlık haptic kuralları — danger/warning, cooldown, on/off
     ├── app.json                         # Expo config, kamera izinleri
     └── .env                             # Boş (API anahtarı yok)
 ```

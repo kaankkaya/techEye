@@ -17,6 +17,7 @@ import {
   prioritizeDetections,
   DetectedObject,
 } from '../utils/announcementUtils';
+import { evaluateProximityHaptics } from '../utils/proximityHaptics';
 import { useTheme } from '../theme/ThemeContext';
 import { FontAwesome6 } from '@expo/vector-icons';
 import SettingsScreen from './SettingsScreen';
@@ -86,6 +87,8 @@ export default function CameraScreen() {
       if (devModeRef.current) {
         setDebugDetections(detected);
       }
+
+      evaluateProximityHaptics(detected);
 
       const close = detected.filter(isCloseEnough);
       const sorted = prioritizeDetections(close);

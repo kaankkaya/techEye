@@ -8,6 +8,7 @@ import {
   Modal,
   TouchableWithoutFeedback,
   ScrollView,
+  Switch,
 } from 'react-native';
 import HapticButton from './HapticButton';
 import AppText from './AppText';
@@ -21,6 +22,10 @@ import {
   loadSavedUnit,
   saveUnit,
 } from '../utils/unitService';
+import {
+  loadHapticEnabled,
+  saveHapticEnabled,
+} from '../utils/proximityHaptics';
 
 const PREVIEW_TEXT = 'Selam, ben yeni asistanınız.';
 const UNIT_OPTIONS: DistanceUnit[] = ['metre', 'adim'];
@@ -35,13 +40,15 @@ export default function SettingsScreen({ onClose }: Props) {
   const [loading, setLoading]           = useState(true);
   const [unit, setUnit]                 = useState<DistanceUnit>('metre');
   const [unitPickerVisible, setUnitPickerVisible] = useState(false);
+  const [hapticOn, setHapticOn]         = useState(true);
 
   useEffect(() => {
     (async () => {
-      const [turkishVoices, savedId, savedUnit] = await Promise.all([
+      const [turkishVoices, savedId, savedUnit, savedHaptic] = await Promise.all([
         getTurkishVoices(),
         loadSavedVoice(),
         loadSavedUnit(),
+        loadHapticEnabled(),
       ]);
       const sorted = [...turkishVoices].sort((a, b) => {
         if (a.quality === b.quality) return a.name.localeCompare(b.name);
@@ -50,6 +57,7 @@ export default function SettingsScreen({ onClose }: Props) {
       setVoices(sorted);
       setSelectedId(savedId ?? sorted[0]?.identifier);
       setUnit(savedUnit);
+      setHapticOn(savedHaptic);
       setLoading(false);
     })();
   }, []);
@@ -63,6 +71,11 @@ export default function SettingsScreen({ onClose }: Props) {
     setUnit(u);
     setUnitPickerVisible(false);
     await saveUnit(u);
+  }, []);
+
+  const toggleHaptic = useCallback(async (value: boolean) => {
+    setHapticOn(value);
+    await saveHapticEnabled(value);
   }, []);
 
   const preview = useCallback((voice: Speech.Voice) => {
@@ -188,6 +201,31 @@ export default function SettingsScreen({ onClose }: Props) {
             <FontAwesome6 name="chevron-right" size={13} color={theme.textSecondary} />
           </View>
         </HapticButton>
+
+        {/* Haptic satırı */}
+        <View style={[styles.settingRow, { borderBottomColor: theme.border }]}>
+          <View style={styles.settingRowLeft}>
+            <View style={[styles.settingIcon, { backgroundColor: theme.accentSoft }]}>
+              <FontAwesome6 name="hand-pointer" size={14} color={theme.accent} />
+            </View>
+            <View>
+              <AppText weight="bold" size={17} style={{ color: theme.text }}>
+                Titreşim
+              </AppText>
+              <AppText size={13} style={{ color: theme.textSecondary, marginTop: 2 }}>
+                Yakın nesne uyarısı
+              </AppText>
+            </View>
+          </View>
+          <Switch
+            value={hapticOn}
+            onValueChange={toggleHaptic}
+            trackColor={{ false: theme.border, true: theme.accent }}
+            thumbColor="#FFFFFF"
+            accessibilityLabel="Titreşim uyarısını aç veya kapat"
+            accessibilityRole="switch"
+          />
+        </View>
 
         {/* Ses bölümü */}
         <View style={[styles.sectionHeader, { borderBottomColor: theme.border, marginTop: 24 }]}>

@@ -12,6 +12,7 @@ import VoicePickerScreen from './src/components/VoicePickerScreen';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import { initTTS } from './src/tts/ttsService';
 import { initUnit } from './src/utils/unitService';
+import { initHaptics } from './src/utils/proximityHaptics';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -28,6 +29,7 @@ export default function App() {
       SplashScreen.hideAsync();
       initTTS();
       initUnit();
+      initHaptics();
     }
   }, [fontsLoaded]);
 
