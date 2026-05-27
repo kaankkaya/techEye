@@ -2,9 +2,9 @@ import { useRef, useEffect } from 'react';
 import { View, ViewStyle } from 'react-native';
 import LottieView from 'lottie-react-native';
 
-type Props = { isScanning: boolean; style?: ViewStyle };
+type Props = { isScanning: boolean; size?: number; style?: ViewStyle };
 
-export default function ScanningEye({ isScanning, style }: Props) {
+export default function ScanningEye({ isScanning, size = 56, style }: Props) {
   const lottieRef = useRef<LottieView>(null);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function ScanningEye({ isScanning, style }: Props) {
         source={require('../../assets/animations/eye/scanning-eye.json')}
         autoPlay={false}
         loop
-        style={{ width: 56, height: 56 }}
+        style={{ width: size, height: size }}
       />
     </View>
   );

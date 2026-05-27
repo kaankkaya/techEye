@@ -4,7 +4,6 @@ import {
   StyleSheet,
   useWindowDimensions,
   Modal,
-  TouchableOpacity,
 } from 'react-native';
 import HapticButton from './HapticButton';
 import AppText from './AppText';
@@ -226,7 +225,8 @@ export default function CameraScreen() {
       )}
 
       {displayMode === 'basit' && (
-        <TouchableOpacity
+        <HapticButton
+          haptic="medium"
           style={StyleSheet.absoluteFill}
           activeOpacity={1}
           onPress={isScanning ? stopScanning : startScanning}
@@ -244,6 +244,14 @@ export default function CameraScreen() {
       >
         <FontAwesome6 name="gear" size={18} color={theme.textSecondary} />
       </HapticButton>
+
+      {displayMode === 'basit' && (
+        <ScanningEye
+          isScanning={isScanning}
+          size={40}
+          style={[styles.basitScanningEye, { opacity: 0.7 }]}
+        />
+      )}
 
       <HapticButton
         haptic="selection"
@@ -362,6 +370,13 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  basitScanningEye: {
+    position: 'absolute',
+    top: 56,
+    left: 68,
+    width: 40,
+    height: 40,
   },
   devButton: {
     position: 'absolute',
