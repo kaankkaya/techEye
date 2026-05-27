@@ -423,10 +423,16 @@ Her detection döngüsünde tespit edilen tüm nesneler `evaluateProximityHaptic
 
 ### Kurallar
 
-| Kural | Koşul | Titreşim | Yoğunluk |
-|---|---|---|---|
-| Danger | `person` veya `car` → `distanceMeters < 1` | 3 × darbe | `Heavy` |
-| Warning | `car` → `1 ≤ distanceMeters ≤ 2` | 2 × darbe | `Medium` |
+Bbox yüksekliği birincil sinyal olarak kullanılır. `distanceMeters`, nesne frame'i doldurduğunda güvenilmez çünkü 320px girişte minimum ölçülebilir mesafe kişi için ~1.22m, araba için ~1.07m'dir. Bbox oranı bu durumda daha doğru bir yakınlık göstergesidir.
+
+| Kural | Birincil koşul (bbox) | Fallback (mesafe) | Titreşim | Yoğunluk |
+|---|---|---|---|---|
+| Danger | `person` / `car` bbox yüksekliği ≥ **%70** | `distanceMeters ≤ 1.5m` | 3 × darbe | `Heavy` |
+| Warning | `car` bbox yüksekliği **%35–%70** | `1.5m < distanceMeters ≤ 3m` | 2 × darbe | `Medium` |
+
+**Fiziksel karşılık:**
+- Danger bbox %70 → kişi < ~1.7m, araba < ~1.1m mesafede
+- Warning bbox %35–%70 → araba ~1.5–3m aralığında
 
 - Her iki kural için bağımsız **3 saniyelik cooldown** uygulanır.
 - **Danger, Warning'e göre önceliklidir** — aynı döngüde ikisi birden tetiklenmez.
