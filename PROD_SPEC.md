@@ -30,7 +30,8 @@ Tüm renkler `src/theme/colors.ts` içinde token olarak tanımlanır ve `ThemePr
 | `accent` | `#F97316` | Primary CTA — Tara butonu |
 | `accentPress` | `#EA580C` | Hover / basılı durum |
 | `accentSoft` | `rgba(249, 115, 22, 0.13)` | Tag fill, dev buton arka planı |
-| `danger` | `#DC2626` | Durdur butonu |
+| `danger` | `#DC2626` | Hata durumları |
+| `secondOrange` | `#d18756` | Taranıyor durumundaki buton rengi |
 | `border` | `#2A211A` | Hairline çizgiler, ayırıcılar |
 | `overlay` | `rgba(15, 10, 8, 0.75)` | Kamera üzerindeki kontrol paneli (scrim) |
 | `text` | `#FFFFFF` | Birincil metin |

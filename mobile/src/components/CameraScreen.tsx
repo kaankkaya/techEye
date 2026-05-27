@@ -21,6 +21,7 @@ import { evaluateProximityHaptics } from '../utils/proximityHaptics';
 import { useTheme } from '../theme/ThemeContext';
 import { FontAwesome6 } from '@expo/vector-icons';
 import SettingsScreen from './SettingsScreen';
+import ScanningEye from './ScanningEye';
 
 const DETECTION_INTERVAL_MS = 1000;
 
@@ -223,7 +224,7 @@ export default function CameraScreen() {
       <HapticButton
         haptic="light"
         style={[styles.settingsButton, { borderColor: theme.border, backgroundColor: theme.accentSoft }]}
-        onPress={() => setSettingsOpen(true)}
+        onPress={() => { stopScanning(); setSettingsOpen(true); }}
         accessibilityLabel="Ayarları aç"
         accessibilityRole="button"
       >
@@ -255,12 +256,7 @@ export default function CameraScreen() {
       </Modal>
 
       <View style={[styles.overlay, { backgroundColor: theme.overlay }]}>
-        <FontAwesome6
-          name="eye-low-vision"
-          size={36}
-          color={theme.accent}
-          style={styles.appIcon}
-        />
+        <ScanningEye isScanning={isScanning} style={styles.appIcon} />
         <AppText
           weight="bold"
           size={22}
@@ -274,14 +270,16 @@ export default function CameraScreen() {
         <HapticButton
           style={[
             styles.button,
-            { backgroundColor: isScanning ? theme.danger : theme.accent },
+            isScanning
+              ? { backgroundColor: theme.accent }
+              : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: theme.accent },
           ]}
           onPress={isScanning ? stopScanning : startScanning}
           accessibilityLabel={isScanning ? 'Taramayı durdur' : 'Taramayı başlat'}
           accessibilityRole="button"
           onPressIn={() => {}}
         >
-          <AppText weight="bold" size={22} style={{ color: theme.text }}>
+          <AppText weight="bold" size={22} style={{ color: isScanning ? theme.text : theme.textSecondary }}>
             {isScanning ? 'Durdur' : 'Tara'}
           </AppText>
         </HapticButton>
@@ -298,9 +296,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingTop: 20,
+    paddingTop: 16,
     paddingBottom: 48,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     alignItems: 'center',
   },
   permissionContainer: {
@@ -319,7 +317,7 @@ const styles = StyleSheet.create({
   appIcon: { marginBottom: 16 },
   statusText: {
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
     lineHeight: 30,
   },
   permissionText: {
@@ -329,7 +327,7 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   button: {
-    width: 160,
+    alignSelf: 'stretch',
     height: 64,
     borderRadius: 16,
     alignItems: 'center',

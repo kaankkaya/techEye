@@ -9,7 +9,8 @@ export const colors = {
   accentSoft:  'rgba(249, 115, 22, 0.13)',
 
   // States
-  danger: '#DC2626',
+  danger:       '#DC2626',
+  secondOrange: '#d18756',
 
   // Structural
   border:  '#2A211A',
