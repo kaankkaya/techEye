@@ -174,6 +174,7 @@ export default function CameraScreen() {
           style={[styles.button, { backgroundColor: theme.accent }]}
           onPress={requestPermission}
           accessibilityLabel="Kameraya izin ver"
+          accessibilityHint="TechEye çevrendeki nesneleri algılamak için kameraya ihtiyaç duyar"
           accessibilityRole="button"
         >
           <AppText weight="bold" size={20} style={{ color: theme.text }}>
@@ -231,6 +232,7 @@ export default function CameraScreen() {
           activeOpacity={1}
           onPress={isScanning ? stopScanning : startScanning}
           accessibilityLabel={isScanning ? 'Taramayı durdur' : 'Taramayı başlat'}
+          accessibilityHint={isScanning ? 'Nesne algılamayı durdurur' : 'Kamera ile nesne algılamayı başlatır'}
           accessibilityRole="button"
         />
       )}
@@ -240,6 +242,7 @@ export default function CameraScreen() {
         style={[styles.settingsButton, { borderColor: theme.border, backgroundColor: theme.accentSoft }]}
         onPress={() => { if (scanningRef.current) stopScanning(); setSettingsOpen(true); }}
         accessibilityLabel="Ayarları aç"
+        accessibilityHint="Ses, birim ve görüntü ayarlarını açar"
         accessibilityRole="button"
       >
         <FontAwesome6 name="gear" size={18} color={theme.textSecondary} />
@@ -261,7 +264,9 @@ export default function CameraScreen() {
           devMode && { borderColor: theme.accent },
         ]}
         onPress={toggleDevMode}
-        accessibilityLabel="Dev mode toggle"
+        accessibilityLabel="Geliştirici modu"
+        accessibilityHint={devMode ? 'Nesne sınırı görünümünü kapatır' : 'Algılanan nesnelerin sınırlarını ekranda gösterir'}
+        accessibilityRole="button"
       >
         <AppText weight="bold" size={12} style={[styles.devButtonText, { color: devMode ? theme.accent : theme.textSecondary }]}>
           DEV
@@ -272,6 +277,7 @@ export default function CameraScreen() {
         visible={settingsOpen}
         animationType="slide"
         presentationStyle="pageSheet"
+        accessibilityViewIsModal
         onRequestClose={() => { setSettingsOpen(false); setDisplayMode(getDisplayMode()); }}
       >
         <SettingsScreen onClose={() => {
@@ -302,6 +308,7 @@ export default function CameraScreen() {
             ]}
             onPress={isScanning ? stopScanning : startScanning}
             accessibilityLabel={isScanning ? 'Taramayı durdur' : 'Taramayı başlat'}
+            accessibilityHint={isScanning ? 'Nesne algılamayı durdurur' : 'Kamera ile nesne algılamayı başlatır'}
             accessibilityRole="button"
             onPressIn={() => {}}
           >

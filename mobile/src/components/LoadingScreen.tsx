@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { useReduceMotion } from '../utils/useReduceMotion';
 
 const ANIMATION_CONTENT_MS = 1100; // frame 66 / 60fps
 
@@ -9,10 +10,16 @@ type Props = { onDone: () => void };
 
 export default function LoadingScreen({ onDone }: Props) {
   const theme = useTheme();
+  const reduceMotion = useReduceMotion();
   const scale   = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    if (reduceMotion) {
+      const timer = setTimeout(onDone, ANIMATION_CONTENT_MS);
+      return () => clearTimeout(timer);
+    }
+
     const timer = setTimeout(() => {
       Animated.parallel([
         Animated.timing(scale, {
@@ -29,7 +36,7 @@ export default function LoadingScreen({ onDone }: Props) {
     }, ANIMATION_CONTENT_MS);
 
     return () => clearTimeout(timer);
-  }, [scale, opacity, onDone]);
+  }, [reduceMotion, scale, opacity, onDone]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>

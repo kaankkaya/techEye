@@ -129,6 +129,8 @@ export default function SettingsScreen({ onClose }: Props) {
           },
         ]}
         onPress={() => selectVoice(item.identifier)}
+        accessibilityLabel={item.name}
+        accessibilityHint="Bu sesi TechEye için seçer"
         accessibilityRole="radio"
         accessibilityState={{ checked: isSelected }}
       >
@@ -154,6 +156,7 @@ export default function SettingsScreen({ onClose }: Props) {
           style={[styles.previewBtn, { borderColor: theme.border }]}
           onPress={() => preview(item)}
           accessibilityLabel={`${item.name} sesini dinle`}
+          accessibilityHint="Seçmeden önce sesi kısa bir örnekle dinler"
         >
           {isPreviewing
             ? <ActivityIndicator size="small" color={theme.accent} />
@@ -181,6 +184,7 @@ export default function SettingsScreen({ onClose }: Props) {
           style={styles.closeBtn}
           onPress={handleClose}
           accessibilityLabel="Ayarları kapat"
+          accessibilityHint="Ayarlar ekranını kapatır ve kamera ekranına döner"
           accessibilityRole="button"
         >
           <FontAwesome6 name="xmark" size={20} color={theme.text} />
@@ -202,6 +206,7 @@ export default function SettingsScreen({ onClose }: Props) {
           style={[styles.settingRow, { borderBottomColor: theme.border }]}
           onPress={() => setUnitPickerVisible(true)}
           accessibilityLabel={`Birim: ${UNIT_LABELS[unit]}`}
+          accessibilityHint="Mesafe gösterim birimini değiştirir"
           accessibilityRole="button"
         >
           <View style={styles.settingRowLeft}>
@@ -241,6 +246,7 @@ export default function SettingsScreen({ onClose }: Props) {
             trackColor={{ false: theme.border, true: theme.accent }}
             thumbColor="#FFFFFF"
             accessibilityLabel="Titreşim uyarısını aç veya kapat"
+            accessibilityHint="Yakın bir nesne algılandığında cihaz titreşir"
             accessibilityRole="switch"
           />
         </View>
@@ -258,6 +264,7 @@ export default function SettingsScreen({ onClose }: Props) {
           style={[styles.settingRow, { borderBottomColor: theme.border }]}
           onPress={() => setDisplayPickerVisible(true)}
           accessibilityLabel={`Tarama ekranı: ${DISPLAY_MODE_LABELS[displayMode]}`}
+          accessibilityHint="Kamera ekranının HUD görünümünü değiştirir"
           accessibilityRole="button"
         >
           <View style={styles.settingRowLeft}>
@@ -307,6 +314,7 @@ export default function SettingsScreen({ onClose }: Props) {
         visible={unitPickerVisible}
         transparent
         animationType="fade"
+        accessibilityViewIsModal
         onRequestClose={() => setUnitPickerVisible(false)}
       >
         <TouchableWithoutFeedback onPress={() => setUnitPickerVisible(false)}>
@@ -325,6 +333,8 @@ export default function SettingsScreen({ onClose }: Props) {
                       i === 0 && { borderTopWidth: StyleSheet.hairlineWidth },
                     ]}
                     onPress={() => selectUnit(opt)}
+                    accessibilityLabel={UNIT_LABELS[opt]}
+                    accessibilityHint="Uzaklıkları bu birimde gösterir"
                     accessibilityRole="radio"
                     accessibilityState={{ checked: unit === opt }}
                   >
@@ -350,6 +360,7 @@ export default function SettingsScreen({ onClose }: Props) {
         visible={displayPickerVisible}
         transparent
         animationType="fade"
+        accessibilityViewIsModal
         onRequestClose={() => setDisplayPickerVisible(false)}
       >
         <TouchableWithoutFeedback onPress={() => setDisplayPickerVisible(false)}>
@@ -368,6 +379,8 @@ export default function SettingsScreen({ onClose }: Props) {
                       i === 0 && { borderTopWidth: StyleSheet.hairlineWidth },
                     ]}
                     onPress={() => selectDisplayMode(opt)}
+                    accessibilityLabel={DISPLAY_MODE_LABELS[opt]}
+                    accessibilityHint="Tarama ekranı görünümünü bu moda geçirir"
                     accessibilityRole="radio"
                     accessibilityState={{ checked: displayMode === opt }}
                   >

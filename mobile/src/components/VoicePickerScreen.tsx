@@ -85,6 +85,8 @@ export default function VoicePickerScreen({ onDone }: Props) {
             backgroundColor: isSelected ? theme.accentSoft : 'transparent' },
         ]}
         onPress={() => setSelectedId(item.identifier)}
+        accessibilityLabel={item.name}
+        accessibilityHint="Bu sesi TechEye asistanı için seçer"
         accessibilityRole="radio"
         accessibilityState={{ checked: isSelected }}
       >
@@ -110,6 +112,7 @@ export default function VoicePickerScreen({ onDone }: Props) {
           style={[styles.previewBtn, { borderColor: theme.border }]}
           onPress={() => preview(item)}
           accessibilityLabel={`${item.name} sesini dinle`}
+          accessibilityHint="Seçmeden önce sesi kısa bir örnekle dinler"
         >
           {isPreviewing
             ? <ActivityIndicator size="small" color={theme.accent} />
@@ -138,6 +141,7 @@ export default function VoicePickerScreen({ onDone }: Props) {
         <HapticButton
           onPress={openAccessibilityVoices}
           accessibilityLabel="Erişilebilirlik ayarlarında diğer seslere göz at"
+          accessibilityHint="Sistem ayarlarından yeni ses indirme talimatlarını gösterir"
           accessibilityRole="link"
         >
           <AppText size={13} style={[styles.settingsLink, { color: theme.textSecondary }]}>
@@ -169,6 +173,7 @@ export default function VoicePickerScreen({ onDone }: Props) {
           style={[styles.btn, styles.btnSkip, { borderColor: theme.accent }]}
           onPress={skip}
           accessibilityLabel="Atla"
+          accessibilityHint="Ses seçmeden uygulamaya geçer, varsayılan ses kullanılır"
           accessibilityRole="button"
         >
           <AppText weight="bold" size={17} style={{ color: theme.textSecondary }}>
@@ -180,6 +185,7 @@ export default function VoicePickerScreen({ onDone }: Props) {
           style={[styles.btn, { backgroundColor: theme.accent }]}
           onPress={confirm}
           accessibilityLabel="Seçimi onayla"
+          accessibilityHint="Seçilen sesi kaydeder ve uygulamayı başlatır"
           accessibilityRole="button"
         >
           <AppText weight="bold" size={17} style={{ color: '#fff' }}>

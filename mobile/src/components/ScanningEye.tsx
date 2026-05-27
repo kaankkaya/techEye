@@ -1,19 +1,21 @@
 import { useRef, useEffect } from 'react';
 import { View, ViewStyle } from 'react-native';
 import LottieView from 'lottie-react-native';
+import { useReduceMotion } from '../utils/useReduceMotion';
 
 type Props = { isScanning: boolean; size?: number; style?: ViewStyle };
 
 export default function ScanningEye({ isScanning, size = 56, style }: Props) {
   const lottieRef = useRef<LottieView>(null);
+  const reduceMotion = useReduceMotion();
 
   useEffect(() => {
-    if (isScanning) {
+    if (isScanning && !reduceMotion) {
       lottieRef.current?.play();
     } else {
       lottieRef.current?.reset();
     }
-  }, [isScanning]);
+  }, [isScanning, reduceMotion]);
 
   return (
     <View style={style}>
