@@ -232,6 +232,9 @@ idle
 | Birim satırı | `FontAwesome6 ruler` ikonu — sol: "Birim" etiketi; sağ: seçili birim adı + chevron. Tıklanınca picker açılır |
 | Birim picker | Saydam arka plan üstünde küçük kart modal — "Birim Seç" başlığı + "Metre" / "Adım" seçenekleri + seçili olan yanında `check` ikonu. Dışına tıklanınca kapanır |
 | Titreşim satırı | `FontAwesome6 hand-pointer` ikonu — "Titreşim" başlığı + "Yakın nesne uyarısı" alt metni + `Switch` toggle. Değişiklik anında kaydedilir |
+| "GÖRÜNTÜ" bölümü | `FontAwesome6 display` + `"GÖRÜNTÜ"` etiketi |
+| Tarama ekranı satırı | `FontAwesome6 eye` ikonu — sol: "Tarama ekranı"; sağ: seçili mod adı + chevron. Tıklanınca picker açılır |
+| Tarama ekranı picker | "Basit" / "Gelişmiş" seçenekleri — seçili yanında `check` ikonu |
 | "SES" bölümü | `FontAwesome6 microphone` + `"SES"` etiketi |
 | Ses listesi | `VoicePickerScreen` ile aynı satır yapısı: isim, Enhanced rozeti, ▶ önizleme |
 | Seçim davranışı | Tüm ayarlar değiştiğinde **anında** kaydedilir, ayrı onay butonu yoktur |
@@ -250,7 +253,18 @@ idle
 - Seçilen birim `AsyncStorage`'a kaydedilir — anahtar: `@techeye/distance_unit`
 - `initUnit()` uygulama açılışında `App.tsx`'te çağrılır (`initTTS()` ile birlikte)
 
-**Not:** `VoicePickerScreen` (açılış akışı) ile `SettingsScreen` (ayarlar) ayrı bileşenlerdir; ikisi de aynı `ttsService` / `unitService` / `proximityHaptics` metotlarını kullanır.
+**Tarama Ekranı Modu:**
+
+| Seçenek | Davranış | Varsayılan |
+|---|---|---|
+| Gelişmiş | Alt HUD (animasyon + status text + buton) görünür | ✓ |
+| Basit | Alt HUD tamamen gizlenir; ekranın herhangi yerine basınca tarama başlar/durur (ayarlar ve DEV butonları hariç) | |
+
+- Persistence: `AsyncStorage` — anahtar: `@techeye/display_mode`
+- `initDisplayMode()` uygulama açılışında `App.tsx`'te çağrılır
+- Ayarlar modal kapanınca `CameraScreen` modu yeniden yükler
+
+**Not:** `VoicePickerScreen` (açılış akışı) ile `SettingsScreen` (ayarlar) ayrı bileşenlerdir; ikisi de aynı `ttsService` / `unitService` / `proximityHaptics` / `displayService` metotlarını kullanır.
 
 ---
 
@@ -563,7 +577,8 @@ techeye/
     │       ├── announcementUtils.ts     # DetectedObject tipi, buildAnnouncement (unitService kullanır)
     │       ├── distanceUtils.ts         # Pinhole mesafe + depth medyan
     │       ├── unitService.ts           # Birim (metre/adım) — AsyncStorage persist, formatDistance()
-    │       └── proximityHaptics.ts      # Yakınlık haptic kuralları — danger/warning, cooldown, on/off
+    │       ├── proximityHaptics.ts      # Yakınlık haptic kuralları — danger/warning, cooldown, on/off
+    │       └── displayService.ts        # Tarama ekranı modu (basit/gelişmiş) — AsyncStorage persist
     ├── app.json                         # Expo config, kamera izinleri
     └── .env                             # Boş (API anahtarı yok)
 ```

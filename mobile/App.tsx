@@ -14,6 +14,7 @@ import { ThemeProvider } from './src/theme/ThemeContext';
 import { initTTS, loadSavedVoice } from './src/tts/ttsService';
 import { initUnit } from './src/utils/unitService';
 import { initHaptics } from './src/utils/proximityHaptics';
+import { initDisplayMode } from './src/utils/displayService';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -32,6 +33,7 @@ export default function App() {
       initTTS();
       initUnit();
       initHaptics();
+      initDisplayMode();
       loadSavedVoice().then(id => {
         if (id) setVoicePicked(true);
       });

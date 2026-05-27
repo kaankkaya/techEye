@@ -4,6 +4,7 @@ import {
   StyleSheet,
   useWindowDimensions,
   Modal,
+  TouchableOpacity,
 } from 'react-native';
 import HapticButton from './HapticButton';
 import AppText from './AppText';
@@ -18,6 +19,7 @@ import {
   DetectedObject,
 } from '../utils/announcementUtils';
 import { evaluateProximityHaptics } from '../utils/proximityHaptics';
+import { DisplayMode, loadDisplayMode, getDisplayMode } from '../utils/displayService';
 import { useTheme } from '../theme/ThemeContext';
 import { FontAwesome6 } from '@expo/vector-icons';
 import SettingsScreen from './SettingsScreen';
@@ -42,6 +44,7 @@ export default function CameraScreen() {
   const [statusText, setStatusText] = useState('Başlamak için Tara\'ya basın');
   const [devMode, setDevMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('gelismis');
   const [debugDetections, setDebugDetections] = useState<DetectedObject[]>([]);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const cameraRef = useRef<CameraView>(null);
@@ -147,6 +150,7 @@ export default function CameraScreen() {
   }, []);
 
   useEffect(() => {
+    loadDisplayMode().then(setDisplayMode);
     return () => {
       scanningRef.current = false;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -221,10 +225,20 @@ export default function CameraScreen() {
         </View>
       )}
 
+      {displayMode === 'basit' && (
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={isScanning ? stopScanning : startScanning}
+          accessibilityLabel={isScanning ? 'Taramayı durdur' : 'Taramayı başlat'}
+          accessibilityRole="button"
+        />
+      )}
+
       <HapticButton
         haptic="light"
         style={[styles.settingsButton, { borderColor: theme.border, backgroundColor: theme.accentSoft }]}
-        onPress={() => { stopScanning(); setSettingsOpen(true); }}
+        onPress={() => { if (scanningRef.current) stopScanning(); setSettingsOpen(true); }}
         accessibilityLabel="Ayarları aç"
         accessibilityRole="button"
       >
@@ -250,40 +264,45 @@ export default function CameraScreen() {
         visible={settingsOpen}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setSettingsOpen(false)}
+        onRequestClose={() => { setSettingsOpen(false); setDisplayMode(getDisplayMode()); }}
       >
-        <SettingsScreen onClose={() => setSettingsOpen(false)} />
+        <SettingsScreen onClose={() => {
+          setSettingsOpen(false);
+          setDisplayMode(getDisplayMode());
+        }} />
       </Modal>
 
-      <View style={[styles.overlay, { backgroundColor: theme.overlay }]}>
-        <ScanningEye isScanning={isScanning} style={styles.appIcon} />
-        <AppText
-          weight="bold"
-          size={22}
-          style={[styles.statusText, { color: theme.text }]}
-          accessibilityLiveRegion="polite"
-          accessibilityLabel={statusText}
-        >
-          {statusText}
-        </AppText>
-
-        <HapticButton
-          style={[
-            styles.button,
-            isScanning
-              ? { backgroundColor: theme.accent }
-              : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: theme.accent },
-          ]}
-          onPress={isScanning ? stopScanning : startScanning}
-          accessibilityLabel={isScanning ? 'Taramayı durdur' : 'Taramayı başlat'}
-          accessibilityRole="button"
-          onPressIn={() => {}}
-        >
-          <AppText weight="bold" size={22} style={{ color: isScanning ? theme.text : theme.textSecondary }}>
-            {isScanning ? 'Durdur' : 'Tara'}
+      {displayMode === 'gelismis' && (
+        <View style={[styles.overlay, { backgroundColor: theme.overlay }]}>
+          <ScanningEye isScanning={isScanning} style={styles.appIcon} />
+          <AppText
+            weight="bold"
+            size={22}
+            style={[styles.statusText, { color: theme.text }]}
+            accessibilityLiveRegion="polite"
+            accessibilityLabel={statusText}
+          >
+            {statusText}
           </AppText>
-        </HapticButton>
-      </View>
+
+          <HapticButton
+            style={[
+              styles.button,
+              isScanning
+                ? { backgroundColor: theme.accent }
+                : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: theme.accent },
+            ]}
+            onPress={isScanning ? stopScanning : startScanning}
+            accessibilityLabel={isScanning ? 'Taramayı durdur' : 'Taramayı başlat'}
+            accessibilityRole="button"
+            onPressIn={() => {}}
+          >
+            <AppText weight="bold" size={22} style={{ color: isScanning ? theme.text : theme.textSecondary }}>
+              {isScanning ? 'Durdur' : 'Tara'}
+            </AppText>
+          </HapticButton>
+        </View>
+      )}
     </View>
   );
 }

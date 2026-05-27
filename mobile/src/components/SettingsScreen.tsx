@@ -23,12 +23,20 @@ import {
   saveUnit,
 } from '../utils/unitService';
 import {
+  DisplayMode,
+  DISPLAY_MODE_LABELS,
+  DISPLAY_MODE_OPTIONS,
+  loadDisplayMode,
+  saveDisplayMode,
+} from '../utils/displayService';
+import {
   loadHapticEnabled,
   saveHapticEnabled,
 } from '../utils/proximityHaptics';
 
 const PREVIEW_TEXT = 'Selam, ben yeni asistanınız.';
 const UNIT_OPTIONS: DistanceUnit[] = ['metre', 'adim'];
+
 
 type Props = { onClose: () => void };
 
@@ -41,14 +49,17 @@ export default function SettingsScreen({ onClose }: Props) {
   const [unit, setUnit]                 = useState<DistanceUnit>('metre');
   const [unitPickerVisible, setUnitPickerVisible] = useState(false);
   const [hapticOn, setHapticOn]         = useState(true);
+  const [displayMode, setDisplayMode]   = useState<DisplayMode>('gelismis');
+  const [displayPickerVisible, setDisplayPickerVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const [turkishVoices, savedId, savedUnit, savedHaptic] = await Promise.all([
+      const [turkishVoices, savedId, savedUnit, savedHaptic, savedDisplay] = await Promise.all([
         getTurkishVoices(),
         loadSavedVoice(),
         loadSavedUnit(),
         loadHapticEnabled(),
+        loadDisplayMode(),
       ]);
       const sorted = [...turkishVoices].sort((a, b) => {
         if (a.quality === b.quality) return a.name.localeCompare(b.name);
@@ -58,6 +69,7 @@ export default function SettingsScreen({ onClose }: Props) {
       setSelectedId(savedId ?? sorted[0]?.identifier);
       setUnit(savedUnit);
       setHapticOn(savedHaptic);
+      setDisplayMode(savedDisplay);
       setLoading(false);
     })();
   }, []);
@@ -71,6 +83,12 @@ export default function SettingsScreen({ onClose }: Props) {
     setUnit(u);
     setUnitPickerVisible(false);
     await saveUnit(u);
+  }, []);
+
+  const selectDisplayMode = useCallback(async (mode: DisplayMode) => {
+    setDisplayMode(mode);
+    setDisplayPickerVisible(false);
+    await saveDisplayMode(mode);
   }, []);
 
   const toggleHaptic = useCallback(async (value: boolean) => {
@@ -227,6 +245,37 @@ export default function SettingsScreen({ onClose }: Props) {
           />
         </View>
 
+        {/* Görüntü bölümü */}
+        <View style={[styles.sectionHeader, { borderBottomColor: theme.border, marginTop: 24 }]}>
+          <FontAwesome6 name="display" size={14} color={theme.accent} />
+          <AppText weight="bold" size={13} style={{ color: theme.textSecondary, letterSpacing: 0.8 }}>
+            GÖRÜNTÜ
+          </AppText>
+        </View>
+
+        <HapticButton
+          haptic="light"
+          style={[styles.settingRow, { borderBottomColor: theme.border }]}
+          onPress={() => setDisplayPickerVisible(true)}
+          accessibilityLabel={`Tarama ekranı: ${DISPLAY_MODE_LABELS[displayMode]}`}
+          accessibilityRole="button"
+        >
+          <View style={styles.settingRowLeft}>
+            <View style={[styles.settingIcon, { backgroundColor: theme.accentSoft }]}>
+              <FontAwesome6 name="eye" size={14} color={theme.accent} />
+            </View>
+            <AppText weight="bold" size={17} style={{ color: theme.text }}>
+              Tarama ekranı
+            </AppText>
+          </View>
+          <View style={styles.settingRowRight}>
+            <AppText size={17} style={{ color: theme.textSecondary }}>
+              {DISPLAY_MODE_LABELS[displayMode]}
+            </AppText>
+            <FontAwesome6 name="chevron-right" size={13} color={theme.textSecondary} />
+          </View>
+        </HapticButton>
+
         {/* Ses bölümü */}
         <View style={[styles.sectionHeader, { borderBottomColor: theme.border, marginTop: 24 }]}>
           <FontAwesome6 name="microphone" size={14} color={theme.accent} />
@@ -287,6 +336,49 @@ export default function SettingsScreen({ onClose }: Props) {
                       {UNIT_LABELS[opt]}
                     </AppText>
                     {unit === opt && (
+                      <FontAwesome6 name="check" size={16} color={theme.accent} />
+                    )}
+                  </HapticButton>
+                ))}
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+      {/* Display mode picker modal */}
+      <Modal
+        visible={displayPickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDisplayPickerVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setDisplayPickerVisible(false)}>
+          <View style={styles.pickerOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={[styles.pickerCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <AppText weight="bold" size={15} style={[styles.pickerTitle, { color: theme.textSecondary }]}>
+                  Tarama Ekranı
+                </AppText>
+                {DISPLAY_MODE_OPTIONS.map((opt, i) => (
+                  <HapticButton
+                    key={opt}
+                    style={[
+                      styles.pickerOption,
+                      { borderTopColor: theme.border },
+                      i === 0 && { borderTopWidth: StyleSheet.hairlineWidth },
+                    ]}
+                    onPress={() => selectDisplayMode(opt)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: displayMode === opt }}
+                  >
+                    <AppText
+                      weight={displayMode === opt ? 'bold' : 'regular'}
+                      size={18}
+                      style={{ color: displayMode === opt ? theme.accent : theme.text }}
+                    >
+                      {DISPLAY_MODE_LABELS[opt]}
+                    </AppText>
+                    {displayMode === opt && (
                       <FontAwesome6 name="check" size={16} color={theme.accent} />
                     )}
                   </HapticButton>
