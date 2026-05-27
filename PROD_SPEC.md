@@ -65,7 +65,7 @@ Minimum body font size: **18sp**. Font yükleme tamamlanana kadar `SplashScreen`
 | Border radius | 16dp |
 | Min tap target | 64×64dp |
 
-Butonlar `accessibilityRole="button"` ve `accessibilityLabel` içerir.
+Butonlar `accessibilityRole="button"`, `accessibilityLabel` ve `accessibilityHint` içerir.
 
 Tüm butonlar `HapticButton` komponenti ile sarılır (`src/components/HapticButton.tsx`). Haptic feedback tek merkezden yönetilir; varsayılan yoğunluk `medium`, DEV toggle butonu `selection` kullanır.
 
@@ -86,6 +86,7 @@ Tüm butonlar `HapticButton` komponenti ile sarılır (`src/components/HapticBut
 | Arka plan | `theme.background` — tam ekran |
 | Lottie animasyonu | `assets/animations/eye/loading-eye.json` — `autoPlay`, `loop={false}`, 120×120px, ortalı |
 | Çıkış geçişi | Animasyon içeriği bitince (1100ms — frame 66/60fps) `scale: 1→4` + `opacity: 1→0`, 500ms `Animated.parallel` — `onAnimationFinish` yerine `setTimeout(1100)` kullanılır |
+| Reduce Motion | `useReduceMotion()` aktifse zoom+fade atlanır; Lottie oynandıktan sonra direkt `onDone()` çağrılır |
 
 **App akışı:**
 ```
@@ -275,23 +276,19 @@ idle
 ```
 [Tara basıldı]
       │
-  initModels() — YOLO + Depth paralel yüklenir (bir kez)
+  initModels() — YOLO yüklenir (bir kez)
       │
-  setInterval(runDetection, 1000ms)
+  setTimeout(runDetection, 1000ms)
       │
   takePictureAsync({ quality: 0.4, shutterSound: false })
       │  URI döner (base64 değil)
       │
   detectObjects(uri, width, height)
       │
-  mlPipeline: Promise.all([
-    runYolo(uri),      → YoloDetection[] (bbox + label)
-    runDepth(uri)      → DepthMap (Float32Array)
-  ])
+  runYolo(uri) → YoloDetection[] (bbox + label + confidence)
       │
   Her detection için:
-    ├─ estimateDistanceMeters(label, bboxHeight) → metre
-    └─ getRegionDepth(depthMap, bbox)            → relatif derinlik
+    └─ estimateDistanceMeters(label, bboxHeight) → metre
       │
   isCloseEnough() ile filtrele (≤ 5m veya bbox eşiği)
       │
@@ -345,16 +342,11 @@ Aynı öncelikte birden fazla nesne varsa en yakın (düşük `distanceMeters`) 
 ```
 takePictureAsync → URI
         │
-        ├─── YOLO11n (320×320)          ─┐
-        │    └→ bounding box + label      │  Promise.all (paralel)
-        │                                 │
-        └─── DepthAnything V2 ViT-S      ─┘
-             (518×518)
-             └→ depth map (Float32Array)
+        └─── YOLO11n (320×320)
+             └→ bounding box + label + confidence
                      │
-          bounding box ∩ depth map
-                     │
-          mesafe tahmini (metre)
+          estimateDistanceMeters(label, bboxHeight)
+          (pinhole kamera modeli — bbox yüksekliğinden mesafe tahmini)
                      │
           "2.3 metre uzağınızda bir kişi var" → TTS [tr-TR]
 ```
@@ -364,9 +356,8 @@ takePictureAsync → URI
 | Dosya | Format | Gerçek Boyut | Görev |
 |---|---|---|---|
 | `MLModels/yolo11n.onnx` | ONNX | 10MB | Nesne tespiti + bounding box |
-| `MLModels/depth_anything_v2_vits.onnx` | ONNX | 95MB (tek dosya) | Piksel bazlı derinlik haritası |
 
-**Dönüştürme notu:** `.pt`/`.pth` → `.onnx` Python ile bir kez yapılır. Depth modeli ilk exportta `onnx + onnx.data` ikili format üretir; `onnx.save_model(..., save_as_external_data=False)` ile tek dosyaya birleştirilir.
+**Dönüştürme notu:** `.pt` → `.onnx` Python ile bir kez yapılır.
 
 ### YOLO11n
 
@@ -379,16 +370,6 @@ takePictureAsync → URI
 | IoU eşiği (NMS) | `0.45` |
 | Execution provider | CoreML (iOS) → CPU fallback |
 | Anchor sayısı | 2100 (320px: 40²+20²+10²) |
-
-### DepthAnything V2 ViT-S
-
-| Alan | Değer |
-|---|---|
-| Input shape | `[1, 3, 518, 518]` CHW float32, 0–1 normalize |
-| Output shape | `[1, 518, 518]` |
-| Yorum | Yüksek değer = uzak nesne (depth, disparity değil) |
-| Kullanım | Bounding box bölgesinin **medyan** derinlik değeri |
-| Execution provider | CoreML (iOS) → CPU fallback |
 
 ### Mesafe Tahmini (Pinhole Kamera Modeli)
 
@@ -408,8 +389,6 @@ odak_uzaklığı ≈ 229 px  (320px genişlik, ~70° FOV iPhone geniş kamera)
 | cat | 0.30m |
 
 Geçerli aralık: **0.3m – 20m**. Dışındaki değerler `-1` olarak işaretlenir, duyuruda mesafe belirtilmez.
-
-DepthAnything çıktısı mutlak mesafe için değil; aynı karede birden fazla nesne olduğunda **hangisinin daha yakın olduğunu** karşılaştırmak için kullanılır.
 
 ### Image Preprocessing
 
@@ -510,9 +489,34 @@ Bbox yüksekliği birincil sinyal olarak kullanılır. `distanceMeters`, nesne f
 
 ## Erişilebilirlik
 
-- `accessibilityRole="button"` tüm butonlarda
-- `accessibilityLabel` tüm interaktif elemanlarda
-- `accessibilityLiveRegion="polite"` status text'te
+### Roller ve Etiketler
+
+| API | Kapsam |
+|---|---|
+| `accessibilityRole` | Tüm interaktif elemanlarda — `button`, `radio`, `switch`, `link` |
+| `accessibilityLabel` | Tüm interaktif elemanlarda — VoiceOver'ın okuduğu birincil metin |
+| `accessibilityHint` | Tüm interaktif elemanlarda — butonun ne yapacağını açıklar (label'dan bağımsız) |
+| `accessibilityState` | Radio seçenekleri (`checked`), switch (`checked`) |
+| `accessibilityLiveRegion="polite"` | Status text — içerik değişince VoiceOver otomatik okur |
+| `accessibilityViewIsModal` | Tüm Modal bileşenlerinde — VoiceOver odağı modal dışına çıkamaz |
+
+**Dinamik hint'ler:** Bazı hint'ler uygulama durumuna göre değişir. Örneğin Tara/Durdur butonu:
+- `isScanning === false` → hint: `"Kamera ile nesne algılamayı başlatır"`
+- `isScanning === true` → hint: `"Nesne algılamayı durdurur"`
+
+### Reduce Motion (Hareketi Azalt)
+
+`useReduceMotion()` hook'u (`src/utils/useReduceMotion.ts`) sistem ayarını dinler:
+- `AccessibilityInfo.isReduceMotionEnabled()` ile başlangıç değeri alınır
+- `reduceMotionChanged` event'i ile sistem değişiklikleri anlık takip edilir
+
+| Bileşen | Reduce Motion davranışı |
+|---|---|
+| `LoadingScreen` | Zoom+fade geçişi atlanır; Lottie oynadıktan sonra direkt `onDone()` çağrılır |
+| `ScanningEye` | `play()` çağrılmaz; animasyon ilk karesinde statik kalır |
+
+### Genel Kurallar
+
 - Minimum font size: 22px
 - Minimum tap target: 64×64dp
 
@@ -568,8 +572,7 @@ techeye/
     │   ├── detection/
     │   │   ├── imagePreprocessor.ts     # URI → CHW Float32Array (jpeg-js)
     │   │   ├── yoloInference.ts         # YOLO11n ONNX session + NMS
-    │   │   ├── depthInference.ts        # DepthAnything V2 ONNX session
-    │   │   ├── mlPipeline.ts            # Promise.all paralel çalıştırma
+    │   │   ├── mlPipeline.ts            # YOLO çalıştırma + mesafe tahmini
     │   │   └── detectionService.ts      # mlPipeline wrapper
     │   ├── tts/
     │   │   └── ttsService.ts            # expo-speech, tr-TR, cooldown
@@ -578,7 +581,8 @@ techeye/
     │       ├── distanceUtils.ts         # Pinhole mesafe + depth medyan
     │       ├── unitService.ts           # Birim (metre/adım) — AsyncStorage persist, formatDistance()
     │       ├── proximityHaptics.ts      # Yakınlık haptic kuralları — danger/warning, cooldown, on/off
-    │       └── displayService.ts        # Tarama ekranı modu (basit/gelişmiş) — AsyncStorage persist
+    │       ├── displayService.ts        # Tarama ekranı modu (basit/gelişmiş) — AsyncStorage persist
+    │       └── useReduceMotion.ts       # AccessibilityInfo hook — sistem Reduce Motion ayarını dinler
     ├── app.json                         # Expo config, kamera izinleri
     └── .env                             # Boş (API anahtarı yok)
 ```

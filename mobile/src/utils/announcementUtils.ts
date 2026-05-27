@@ -4,7 +4,6 @@ export type DetectedObject = {
   label: string;
   confidence: number;
   distanceMeters?: number;
-  relativeDepth?: number;
   boundingBox?: {
     left: number;
     top: number;
