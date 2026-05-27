@@ -73,9 +73,39 @@ Tüm butonlar `HapticButton` komponenti ile sarılır (`src/components/HapticBut
 
 ## Ekranlar
 
-### 0. Ses Seçim Ekranı (`VoicePickerScreen`)
+### 0. Yükleme Ekranı (`LoadingScreen`)
 
-**Tetikleyici:** Her uygulama açılışında, `CameraScreen`'den önce gösterilir.
+**Tetikleyici:** Font yükleme tamamlanınca native splash kapanır, `LoadingScreen` gösterilir.
+
+**Amaç:** Uygulama açılışında marka deneyimi sağlar; animasyon içeriği bitince zoom+fade geçişiyle sonraki ekrana geçilir.
+
+**Elemanlar:**
+
+| Eleman | Açıklama |
+|---|---|
+| Arka plan | `theme.background` — tam ekran |
+| Lottie animasyonu | `assets/animations/eye/loading-eye.json` — `autoPlay`, `loop={false}`, 120×120px, ortalı |
+| Çıkış geçişi | Animasyon içeriği bitince (1100ms — frame 66/60fps) `scale: 1→4` + `opacity: 1→0`, 500ms `Animated.parallel` — `onAnimationFinish` yerine `setTimeout(1100)` kullanılır |
+
+**App akışı:**
+```
+App açılır → native splash kapanır
+    │
+    └─ LoadingScreen
+          │  (loading-eye animasyonu oynar, ~1.1s)
+          │  (zoom + fade out, 500ms)
+          │
+          ├─ kayıtlı ses varsa → CameraScreen (VoicePickerScreen atlanır)
+          └─ kayıtlı ses yoksa → VoicePickerScreen
+```
+
+**Dosya:** `src/components/LoadingScreen.tsx`
+
+---
+
+### 1. Ses Seçim Ekranı (`VoicePickerScreen`)
+
+**Tetikleyici:** `LoadingScreen` tamamlanınca gösterilir — yalnızca `AsyncStorage`'da kayıtlı ses yoksa (fresh install veya ses silinmişse).
 
 **Amaç:** Kullanıcının cihazında yüklü Türkçe TTS seslerinden birini seçmesine izin verir. Seçim `AsyncStorage`'a kaydedilir; bir sonraki açılışta aynı ses ön seçili gelir.
 
@@ -101,13 +131,10 @@ Tüm butonlar `HapticButton` komponenti ile sarılır (`src/components/HapticBut
 
 **App akışı:**
 ```
-App açılır
+App açılır → LoadingScreen → [kayıtlı ses yok] → VoicePickerScreen
     │
-    ├─ VoicePickerScreen (her açılışta)
-    │       ├─ "Seç ve Devam Et" → ses kaydedilir → CameraScreen
-    │       └─ "Atla"            → ses değişmez   → CameraScreen
-    │
-    └─ CameraScreen
+    ├─ "Seç ve Devam Et" → ses kaydedilir → CameraScreen
+    └─ "Atla"            → ses değişmez   → CameraScreen
 ```
 
 ---
@@ -519,6 +546,8 @@ techeye/
     │   ├── components/
     │   │   ├── AppText.tsx              # Text wrapper — merkezi font yönetimi (FONT map)
     │   │   ├── HapticButton.tsx         # TouchableOpacity wrapper — merkezi haptic feedback
+    │   │   ├── LoadingScreen.tsx        # Açılış Lottie animasyonu + zoom/fade geçişi
+    │   │   ├── ScanningEye.tsx          # Tarama sırasında gösterilen Lottie göz animasyonu
     │   │   ├── VoicePickerScreen.tsx    # Açılış ses seçim ekranı (AsyncStorage persist)
     │   │   ├── SettingsScreen.tsx       # Ayarlar Modal — ses seçimi (anında kaydeder)
     │   │   └── CameraScreen.tsx         # Kamera izni ekranı + ana tarama ekranı

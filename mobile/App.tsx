@@ -9,8 +9,9 @@ import {
 } from '@expo-google-fonts/inter';
 import CameraScreen from './src/components/CameraScreen';
 import VoicePickerScreen from './src/components/VoicePickerScreen';
+import LoadingScreen from './src/components/LoadingScreen';
 import { ThemeProvider } from './src/theme/ThemeContext';
-import { initTTS } from './src/tts/ttsService';
+import { initTTS, loadSavedVoice } from './src/tts/ttsService';
 import { initUnit } from './src/utils/unitService';
 import { initHaptics } from './src/utils/proximityHaptics';
 
@@ -23,6 +24,7 @@ export default function App() {
     Inter_700Bold,
   });
   const [voicePicked, setVoicePicked] = useState(false);
+  const [loadingDone, setLoadingDone] = useState(false);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -30,6 +32,9 @@ export default function App() {
       initTTS();
       initUnit();
       initHaptics();
+      loadSavedVoice().then(id => {
+        if (id) setVoicePicked(true);
+      });
     }
   }, [fontsLoaded]);
 
@@ -38,9 +43,11 @@ export default function App() {
   return (
     <ThemeProvider>
       <StatusBar style="light" />
-      {voicePicked
-        ? <CameraScreen />
-        : <VoicePickerScreen onDone={() => setVoicePicked(true)} />
+      {!loadingDone
+        ? <LoadingScreen onDone={() => setLoadingDone(true)} />
+        : voicePicked
+          ? <CameraScreen />
+          : <VoicePickerScreen onDone={() => setVoicePicked(true)} />
       }
     </ThemeProvider>
   );
