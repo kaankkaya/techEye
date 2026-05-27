@@ -11,6 +11,7 @@ import CameraScreen from './src/components/CameraScreen';
 import VoicePickerScreen from './src/components/VoicePickerScreen';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import { initTTS } from './src/tts/ttsService';
+import { initUnit } from './src/utils/unitService';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,6 +27,7 @@ export default function App() {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
       initTTS();
+      initUnit();
     }
   }, [fontsLoaded]);
 

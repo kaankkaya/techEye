@@ -43,16 +43,17 @@ Tüm renkler `src/theme/colors.ts` içinde token olarak tanımlanır ve `ThemePr
 
 ### Tipografi
 
-**Font: Inter** — Uygulamalarda yaygın olarak kullanılan, okunabilirliği yüksek, Türkçe karakter desteği tam olan modern bir sans-serif font. `@expo-google-fonts/inter` paketi ile yüklenir.
+**Font: Inter** — `@expo-google-fonts/inter` paketi ile yüklenir. Tüm metin `AppText` komponenti üzerinden render edilir (`src/components/AppText.tsx`). Fontu değiştirmek için yalnızca `AppText.tsx` içindeki `FONT` map güncellenir — başka dosyaya dokunulmaz.
 
-| Kullanım | Font Family | Font Size | Font Weight | Line Height |
-|---|---|---|---|---|
-| Status text | `Inter_600SemiBold` | 22px | 600 | 30px |
-| Buton etiketi | `Inter_700Bold` | 22px | 700 | — |
-| İzin mesajı | `Inter_400Regular` | 20px | 400 | 28px |
-| Küçük yardımcı metin | `Inter_400Regular` | 16px | 400 | — |
+| `weight` prop | Font Family | Kullanım |
+|---|---|---|
+| `regular` (default) | `Inter_400Regular` | Açıklama, yardımcı metin |
+| `bold` | `Inter_700Bold` | Başlık, buton, status text |
 
-Minimum body font size: **18sp**. Font yükleme tamamlanana kadar `SplashScreen` tutulur. Yüklenemezse sistem fontu (`System`) fallback olarak kullanılır.
+`AppText` prop'ları: `size` (fontSize), `weight` (`regular` \| `bold`), tüm standart `TextProps`.  
+`includeFontPadding: false` her zaman aktif.
+
+Minimum body font size: **18sp**. Font yükleme tamamlanana kadar `SplashScreen` tutulur.
 
 ### Buton Spesifikasyonu
 
@@ -112,13 +113,18 @@ App açılır
 
 ### 1. Kamera İzni Ekranı
 
-**Tetikleyici:** Kamera izni henüz verilmemiş.
+**Tetikleyici:** `useCameraPermissions()` — izin henüz verilmemiş (`!permission.granted`).
 
 **Elemanlar:**
-- Açıklama metni: `"TechEye'ın çalışması için kamera erişimi gereklidir."`
-- Buton: `"Kameraya İzin Ver"` → `requestPermission()` çağırır
 
-**Stil:** Tam ekran koyu arka plan, ortalanmış içerik.
+| Eleman | Açıklama |
+|---|---|
+| İkon | `FontAwesome6 camera`, 48px, `accent` rengi |
+| Başlık | `"Kamera Erişimi"` — `bold` 26px |
+| Açıklama | `"TechEye çevrendeki nesneleri algılamak için kameraya ihtiyaç duyar."` — `regular` 18px, `textSecondary` |
+| Buton | `"İzin Ver"` — `accent` arka plan, `requestPermission()` çağırır |
+
+**Stil:** Tam ekran, dikey + yatay ortalanmış, `paddingHorizontal: 32`, elemanlar arası `gap: 16`.
 
 ---
 
@@ -154,6 +160,8 @@ idle
 | Eleman | Açıklama |
 |---|---|
 | `CameraView` | Arka kamera, tam ekran, `flex: 1` |
+| Ayarlar Butonu | Sol üst köşe — `FontAwesome6 gear` ikonu; basıldığında `SettingsScreen` Modal açılır |
+| DEV Butonu | Sağ üst köşe — bounding box overlay toggle |
 | Status Text | Ekranın alt kısmında, mevcut durumu yansıtır |
 | Tara/Durdur Butonu | Tarama başlatır / durdurur |
 
@@ -178,6 +186,42 @@ idle
 | `true` | `danger` (#DC2626) | `"Durdur"` | `"Taramayı durdur"` |
 
 **Overlay:** `position: absolute`, ekranın altına sabitlenmiş, `paddingBottom: 48`, `paddingHorizontal: 24`.
+
+---
+
+### 3. Ayarlar Ekranı (`SettingsScreen`)
+
+**Tetikleyici:** `CameraScreen`'in sol üst köşesindeki `gear` ikonuna basılınca açılır.
+
+**Sunum:** `Modal` — `animationType="slide"`, `presentationStyle="pageSheet"` (iOS native bottom sheet).
+
+**Elemanlar:**
+
+| Eleman | Açıklama |
+|---|---|
+| Header | `"Ayarlar"` başlık (ortalı) + sağda `FontAwesome6 xmark` kapat butonu |
+| "GENEL" bölümü | `FontAwesome6 sliders` + `"GENEL"` etiketi |
+| Birim satırı | `FontAwesome6 ruler` ikonu — sol: "Birim" etiketi; sağ: seçili birim adı + chevron. Tıklanınca picker açılır |
+| Birim picker | Saydam arka plan üstünde küçük kart modal — "Birim Seç" başlığı + "Metre" / "Adım" seçenekleri + seçili olan yanında `check` ikonu. Dışına tıklanınca kapanır |
+| "SES" bölümü | `FontAwesome6 microphone` + `"SES"` etiketi |
+| Ses listesi | `VoicePickerScreen` ile aynı satır yapısı: isim, Enhanced rozeti, ▶ önizleme |
+| Seçim davranışı | Birim veya ses seçildiğinde **anında** kaydedilir, ayrı onay butonu yoktur |
+| Kapat | Header'daki `xmark` veya modal dışına basınca kapanır |
+
+**Birim davranışı:**
+
+| Seçenek | Duyuru formatı |
+|---|---|
+| Metre (varsayılan) | `"2.3 metre uzağınızda bir kişi var"` |
+| Adım | `"3 adım uzağınızda bir kişi var"` |
+
+- Ortalama adım uzunluğu: **75 cm** (`STEP_CM = 75`)
+- Dönüşüm: `adım = round((mesafe_m × 100) / 75)`
+- Mesafe bilinmiyorsa birim gösterilmez → `"Önünüzde bir kişi var"` / `"Yakınınızda bir kişi var"`
+- Seçilen birim `AsyncStorage`'a kaydedilir — anahtar: `@techeye/distance_unit`
+- `initUnit()` uygulama açılışında `App.tsx`'te çağrılır (`initTTS()` ile birlikte)
+
+**Not:** `VoicePickerScreen` (açılış akışı) ile `SettingsScreen` (ayarlar) ayrı bileşenlerdir; ikisi de aynı `ttsService` / `unitService` metotlarını kullanır.
 
 ---
 
@@ -349,17 +393,24 @@ URI → expo-image-manipulator → resize (target × target) → JPEG base64
 - Kayıtlı ses varsa `Speech.speak()` çağrılarına `voice: activeVoiceId` eklenir; yoksa platform default'u kullanılır
 - `getTurkishVoices()` → `Speech.getAvailableVoicesAsync()` çıktısından `tr` dil kodlu sesler filtrelenir
 
-**Duyuru formatı (mesafeli):**
+**Duyuru formatı:**
+
+Birim `metre` seçiliyken:
 
 | Label | Mesafe biliniyorsa | Mesafe bilinmiyorsa |
 |---|---|---|
 | `person` | `"2.3 metre uzağınızda bir kişi var"` | `"Önünüzde bir kişi var"` |
 | `car` | `"1.8 metre uzağınızda bir araba var"` | `"Yakınınızda bir araba var"` |
 | `dog` | `"0.9 metre uzağınızda bir köpek var"` | `"Yakınınızda bir köpek var"` |
-| `bicycle` | `"X.X metre uzağınızda bir bisiklet var"` | `"Yakınınızda bir bisiklet var"` |
-| `truck` | `"X.X metre uzağınızda bir kamyon var"` | `"Yakınınızda bir kamyon var"` |
-| `bus` | `"X.X metre uzağınızda bir otobüs var"` | `"Yakınınızda bir otobüs var"` |
-| `cat` | `"X.X metre uzağınızda bir kedi var"` | `"Yakınınızda bir kedi var"` |
+| diğerleri | `"X.X metre uzağınızda bir [nesne] var"` | `"Yakınınızda bir [nesne] var"` |
+
+Birim `adım` seçiliyken:
+
+| Mesafe biliniyorsa | Mesafe bilinmiyorsa |
+|---|---|
+| `"3 adım uzağınızda bir kişi var"` | `"Önünüzde bir kişi var"` |
+
+`formatDistance(meters)` → `unitService.ts`'teki aktif birime göre string döner ya da `null` (mesafe < 0). `buildAnnouncement()` → `announcementUtils.ts`.
 
 Oturum başlangıcı: `"Tarama başladı"` — Bitiş: `"Tarama durduruldu"`
 
@@ -428,9 +479,11 @@ techeye/
     │   └── depth_anything_v2_vits.onnx  # ← React Native kullanır (95MB, tek dosya)
     ├── src/
     │   ├── components/
+    │   │   ├── AppText.tsx              # Text wrapper — merkezi font yönetimi (FONT map)
     │   │   ├── HapticButton.tsx         # TouchableOpacity wrapper — merkezi haptic feedback
     │   │   ├── VoicePickerScreen.tsx    # Açılış ses seçim ekranı (AsyncStorage persist)
-    │   │   └── CameraScreen.tsx         # Ana ekran + tarama döngüsü
+    │   │   ├── SettingsScreen.tsx       # Ayarlar Modal — ses seçimi (anında kaydeder)
+    │   │   └── CameraScreen.tsx         # Kamera izni ekranı + ana tarama ekranı
     │   ├── detection/
     │   │   ├── imagePreprocessor.ts     # URI → CHW Float32Array (jpeg-js)
     │   │   ├── yoloInference.ts         # YOLO11n ONNX session + NMS
@@ -440,8 +493,9 @@ techeye/
     │   ├── tts/
     │   │   └── ttsService.ts            # expo-speech, tr-TR, cooldown
     │   └── utils/
-    │       ├── announcementUtils.ts     # DetectedObject tipi, mesafeli duyuru
-    │       └── distanceUtils.ts         # Pinhole mesafe + depth medyan
+    │       ├── announcementUtils.ts     # DetectedObject tipi, buildAnnouncement (unitService kullanır)
+    │       ├── distanceUtils.ts         # Pinhole mesafe + depth medyan
+    │       └── unitService.ts           # Birim (metre/adım) — AsyncStorage persist, formatDistance()
     ├── app.json                         # Expo config, kamera izinleri
     └── .env                             # Boş (API anahtarı yok)
 ```

@@ -3,6 +3,7 @@ import {
   View,
   StyleSheet,
   useWindowDimensions,
+  Modal,
 } from 'react-native';
 import HapticButton from './HapticButton';
 import AppText from './AppText';
@@ -18,6 +19,7 @@ import {
 } from '../utils/announcementUtils';
 import { useTheme } from '../theme/ThemeContext';
 import { FontAwesome6 } from '@expo/vector-icons';
+import SettingsScreen from './SettingsScreen';
 
 const DETECTION_INTERVAL_MS = 1000;
 
@@ -37,6 +39,7 @@ export default function CameraScreen() {
   const [isScanning, setIsScanning] = useState(false);
   const [statusText, setStatusText] = useState('Başlamak için Tara\'ya basın');
   const [devMode, setDevMode] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [debugDetections, setDebugDetections] = useState<DetectedObject[]>([]);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const cameraRef = useRef<CameraView>(null);
@@ -152,9 +155,13 @@ export default function CameraScreen() {
 
   if (!permission.granted) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <AppText size={20} style={[styles.permissionText, { color: theme.text }]}>
-          TechEye'ın çalışması için kamera erişimi gereklidir.
+      <View style={[styles.container, styles.permissionContainer, { backgroundColor: theme.background }]}>
+        <FontAwesome6 name="camera" size={48} color={theme.accent} style={styles.permissionIcon} />
+        <AppText weight="bold" size={26} style={[styles.permissionTitle, { color: theme.text }]}>
+          Kamera Erişimi
+        </AppText>
+        <AppText size={18} style={[styles.permissionText, { color: theme.textSecondary }]}>
+          TechEye çevrendeki nesneleri algılamak için kameraya ihtiyaç duyar.
         </AppText>
         <HapticButton
           style={[styles.button, { backgroundColor: theme.accent }]}
@@ -162,8 +169,8 @@ export default function CameraScreen() {
           accessibilityLabel="Kameraya izin ver"
           accessibilityRole="button"
         >
-          <AppText weight="bold" size={22} style={{ color: theme.text }}>
-            Kameraya İzin Ver
+          <AppText weight="bold" size={20} style={{ color: theme.text }}>
+            İzin Ver
           </AppText>
         </HapticButton>
       </View>
@@ -211,6 +218,16 @@ export default function CameraScreen() {
       )}
 
       <HapticButton
+        haptic="light"
+        style={[styles.settingsButton, { borderColor: theme.border, backgroundColor: theme.accentSoft }]}
+        onPress={() => setSettingsOpen(true)}
+        accessibilityLabel="Ayarları aç"
+        accessibilityRole="button"
+      >
+        <FontAwesome6 name="gear" size={18} color={theme.textSecondary} />
+      </HapticButton>
+
+      <HapticButton
         haptic="selection"
         style={[
           styles.devButton,
@@ -224,6 +241,15 @@ export default function CameraScreen() {
           DEV
         </AppText>
       </HapticButton>
+
+      <Modal
+        visible={settingsOpen}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setSettingsOpen(false)}
+      >
+        <SettingsScreen onClose={() => setSettingsOpen(false)} />
+      </Modal>
 
       <View style={[styles.overlay, { backgroundColor: theme.overlay }]}>
         <FontAwesome6
@@ -274,6 +300,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     alignItems: 'center',
   },
+  permissionContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    gap: 16,
+  },
+  permissionIcon: { marginBottom: 8 },
+  permissionTitle: { textAlign: 'center' },
+  permissionText: {
+    textAlign: 'center',
+    lineHeight: 28,
+    marginBottom: 8,
+  },
   appIcon: { marginBottom: 16 },
   statusText: {
     textAlign: 'center',
@@ -290,6 +329,17 @@ const styles = StyleSheet.create({
     width: 160,
     height: 64,
     borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingsButton: {
+    position: 'absolute',
+    top: 56,
+    left: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
