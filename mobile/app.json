@@ -12,7 +12,7 @@
         "NSCameraUsageDescription": "TechEye uses the camera to detect nearby objects and people.",
         "NSMicrophoneUsageDescription": "TechEye uses the microphone for audio feedback."
       },
-      "bundleIdentifier": "com.anonymous.techeye"
+      "bundleIdentifier": "com.kaankaya.techeye"
     },
     "android": {
       "adaptiveIcon": {
