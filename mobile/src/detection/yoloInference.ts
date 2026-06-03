@@ -30,12 +30,12 @@ let _session: InferenceSession | null = null;
 
 export async function initYolo(): Promise<void> {
   if (_session) return;
-  console.log('[TechEye] YOLO modeli yükleniyor...');
+  console.log('[eyeTech] YOLO modeli yükleniyor...');
   const [asset] = await Asset.loadAsync(require('../../MLModels/yolo11n.onnx'));
   _session = await InferenceSession.create(asset.localUri!, {
     executionProviders: ['coreml', 'cpu'],
   });
-  console.log('[TechEye] YOLO modeli hazır');
+  console.log('[eyeTech] YOLO modeli hazır');
 }
 
 export async function runYolo(imageUri: string): Promise<YoloDetection[]> {

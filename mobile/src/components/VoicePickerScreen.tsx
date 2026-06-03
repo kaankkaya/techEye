@@ -86,7 +86,7 @@ export default function VoicePickerScreen({ onDone }: Props) {
         ]}
         onPress={() => setSelectedId(item.identifier)}
         accessibilityLabel={item.name}
-        accessibilityHint="Bu sesi TechEye asistanı için seçer"
+        accessibilityHint="Bu sesi eyeTech asistanı için seçer"
         accessibilityRole="radio"
         accessibilityState={{ checked: isSelected }}
       >
@@ -135,7 +135,7 @@ export default function VoicePickerScreen({ onDone }: Props) {
           Ses Seç
         </AppText>
         <AppText size={16} style={[styles.subtitle, { color: theme.textSecondary }]}>
-          TechEye'ın kullanacağı Türkçe sesi seçin.{'\n'}
+          eyeTech'in kullanacağı Türkçe sesi seçin.{'\n'}
           Sesleri dinlemek için ▶ tuşuna basın.
         </AppText>
         <HapticButton

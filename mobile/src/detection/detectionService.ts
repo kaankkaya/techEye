@@ -7,10 +7,10 @@ export async function detectObjects(
   imageHeight: number
 ): Promise<DetectedObject[]> {
   const t0 = Date.now();
-  console.log('[TechEye] ML pipeline başlatılıyor...');
+  console.log('[eyeTech] ML pipeline başlatılıyor...');
 
   const results = await detectWithDistance(photoUri, imageWidth, imageHeight);
 
-  console.log(`[TechEye] Pipeline tamamlandı: ${Date.now() - t0}ms | ${results.length} nesne`);
+  console.log(`[eyeTech] Pipeline tamamlandı: ${Date.now() - t0}ms | ${results.length} nesne`);
   return results;
 }

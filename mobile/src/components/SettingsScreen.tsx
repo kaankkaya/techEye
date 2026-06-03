@@ -130,7 +130,7 @@ export default function SettingsScreen({ onClose }: Props) {
         ]}
         onPress={() => selectVoice(item.identifier)}
         accessibilityLabel={item.name}
-        accessibilityHint="Bu sesi TechEye için seçer"
+        accessibilityHint="Bu sesi eyeTech için seçer"
         accessibilityRole="radio"
         accessibilityState={{ checked: isSelected }}
       >

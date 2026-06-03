@@ -9,7 +9,7 @@ export const DISPLAY_MODE_LABELS: Record<DisplayMode, string> = {
 
 export const DISPLAY_MODE_OPTIONS: DisplayMode[] = ['basit', 'gelismis'];
 
-const DISPLAY_MODE_KEY = '@techeye/display_mode';
+const DISPLAY_MODE_KEY = '@eyetech/display_mode';
 let activeMode: DisplayMode = 'gelismis';
 
 export async function initDisplayMode(): Promise<void> {

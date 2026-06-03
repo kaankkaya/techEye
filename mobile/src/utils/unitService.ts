@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type DistanceUnit = 'metre' | 'adim';
 
-const UNIT_KEY = '@techeye/distance_unit';
+const UNIT_KEY = '@eyetech/distance_unit';
 const STEP_CM = 75; // ortalama adım uzunluğu
 
 let activeUnit: DistanceUnit = 'metre';

@@ -3,9 +3,9 @@ import { runYolo, initYolo, YOLO_INPUT_SIZE } from './yoloInference';
 import { estimateDistanceMeters } from '../utils/distanceUtils';
 
 export async function initModels(): Promise<void> {
-  console.log('[TechEye] YOLO modeli yükleniyor...');
+  console.log('[eyeTech] YOLO modeli yükleniyor...');
   await initYolo();
-  console.log('[TechEye] Model hazır');
+  console.log('[eyeTech] Model hazır');
 }
 
 export async function detectWithDistance(
@@ -15,7 +15,7 @@ export async function detectWithDistance(
 ): Promise<DetectedObject[]> {
   const yoloResults = await runYolo(photoUri);
 
-  console.log(`[TechEye] YOLO: ${yoloResults.length} nesne`);
+  console.log(`[eyeTech] YOLO: ${yoloResults.length} nesne`);
 
   return yoloResults.map((det) => {
     // YOLO çıktısı piksel koordinatı (0–320) — normalize et
@@ -27,7 +27,7 @@ export async function detectWithDistance(
     const distanceMeters = estimateDistanceMeters(det.label, bboxH);
 
     console.log(
-      `[TechEye] ${det.label}: ${distanceMeters > 0 ? distanceMeters + 'm' : 'mesafe?'} | conf=${(det.confidence * 100).toFixed(1)}%`
+      `[eyeTech] ${det.label}: ${distanceMeters > 0 ? distanceMeters + 'm' : 'mesafe?'} | conf=${(det.confidence * 100).toFixed(1)}%`
     );
 
     return {

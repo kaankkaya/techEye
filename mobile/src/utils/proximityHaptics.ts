@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DetectedObject } from './announcementUtils';
 
-const HAPTIC_ENABLED_KEY = '@techeye/haptic_enabled';
+const HAPTIC_ENABLED_KEY = '@eyetech/haptic_enabled';
 const COOLDOWN_MS = 3000;
 
 type HapticLevel = 'danger' | 'warning';

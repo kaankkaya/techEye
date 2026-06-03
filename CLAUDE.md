@@ -1,4 +1,4 @@
-# TechEye — CLAUDE.md
+# eyeTech — CLAUDE.md
 
 > **Agent prensipleri ve metodları için → [`AGENTS.md`](./AGENTS.md)**
 > Bu projede çalışan her agent'ın nasıl davranması gerektiğini, hangi metodları kullandığını ve kısıtlamalarını `AGENTS.md` tanımlar. Kod yazarken veya mimari karar alırken o dosyayı referans al.
@@ -8,7 +8,7 @@
 
 ## Project Overview
 
-**TechEye** is a social responsibility project designed to assist visually impaired individuals. The app uses the device's camera combined with AI-powered object detection to identify nearby objects and people, then announces them aloud via text-to-speech in natural, contextual English sentences (e.g., *"There is a person in front of you"*, *"A car is approaching on your right"*).
+**eyeTech** is a social responsibility project designed to assist visually impaired individuals. The app uses the device's camera combined with AI-powered object detection to identify nearby objects and people, then announces them aloud via text-to-speech in natural, contextual English sentences (e.g., *"There is a person in front of you"*, *"A car is approaching on your right"*).
 
 ## Goals
 
@@ -45,7 +45,7 @@
 ## Project Structure (Planned)
 
 ```
-techeye/
+eyetech/
 ├── mobile/          # React Native app
 │   ├── src/
 │   │   ├── components/

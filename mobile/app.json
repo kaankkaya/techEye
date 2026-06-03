@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "TechEye",
-    "slug": "techeye",
+    "name": "eyeTech",
+    "slug": "eyetech",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -9,11 +9,11 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "TechEye uses the camera to detect nearby objects and people.",
-        "NSMicrophoneUsageDescription": "TechEye uses the microphone for audio feedback.",
+        "NSCameraUsageDescription": "eyeTech uses the camera to detect nearby objects and people.",
+        "NSMicrophoneUsageDescription": "eyeTech uses the microphone for audio feedback.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "bundleIdentifier": "com.kaankaya.techeye"
+      "bundleIdentifier": "com.kaankaya.eyetech"
     },
     "android": {
       "adaptiveIcon": {
@@ -35,7 +35,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "TechEye uses the camera to detect nearby objects and people."
+          "cameraPermission": "eyeTech uses the camera to detect nearby objects and people."
         }
       ],
       "expo-splash-screen",

@@ -2,7 +2,7 @@ import * as Speech from 'expo-speech';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const COOLDOWN_MS = 4000;
-const STORAGE_KEY = '@techeye/selected_voice';
+const STORAGE_KEY = '@eyetech/selected_voice';
 const lastSpokenAt: Record<string, number> = {};
 
 let activeVoiceId: string | undefined;

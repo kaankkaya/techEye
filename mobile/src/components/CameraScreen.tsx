@@ -74,7 +74,7 @@ export default function CameraScreen() {
         shutterSound: false,
       });
     } catch (err: any) {
-      console.warn('[TechEye] Frame capture failed:', err?.message ?? err);
+      console.warn('[eyeTech] Frame capture failed:', err?.message ?? err);
       scheduleNext();
       return;
     }
@@ -99,14 +99,14 @@ export default function CameraScreen() {
       if (sorted.length > 0) {
         const top = sorted[0];
         const message = buildAnnouncement(top);
-        console.log(`[TechEye] Announcing: "${message}"`);
+        console.log(`[eyeTech] Announcing: "${message}"`);
         setStatusText(message);
         await speak(message, top.label);
       } else {
         setStatusText('');
       }
     } catch (err: any) {
-      console.warn('[TechEye] Detection error:', err?.message ?? err);
+      console.warn('[eyeTech] Detection error:', err?.message ?? err);
     }
 
     scheduleNext();
@@ -117,7 +117,7 @@ export default function CameraScreen() {
     try {
       await initModels();
     } catch (e) {
-      console.error('[TechEye] Model yükleme hatası:', e);
+      console.error('[eyeTech] Model yükleme hatası:', e);
       setStatusText('Model yüklenemedi — .onnx dosyaları eksik');
       return;
     }
@@ -168,13 +168,13 @@ export default function CameraScreen() {
           Kamera Erişimi
         </AppText>
         <AppText size={18} style={[styles.permissionText, { color: theme.textSecondary }]}>
-          TechEye çevrendeki nesneleri algılamak için kameraya ihtiyaç duyar.
+          eyeTech çevrendeki nesneleri algılamak için kameraya ihtiyaç duyar.
         </AppText>
         <HapticButton
           style={[styles.button, { backgroundColor: theme.accent }]}
           onPress={requestPermission}
           accessibilityLabel="Kameraya izin ver"
-          accessibilityHint="TechEye çevrendeki nesneleri algılamak için kameraya ihtiyaç duyar"
+          accessibilityHint="eyeTech çevrendeki nesneleri algılamak için kameraya ihtiyaç duyar"
           accessibilityRole="button"
         >
           <AppText weight="bold" size={20} style={{ color: theme.text }}>
