@@ -5,3 +5,6 @@ mobile/MLModels/*.onnx
 mobile/MLModels/*.onnx.data
 mobile/MLModels/*.pt
 mobile/MLModels/*.pth
+
+# Test video files
+test-videos/

@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eyeTech — Detection Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+  <style>
+    :root {
+      --bg:            #0F0A08;
+      --surface:       #1A1108;
+      --accent:        #F97316;
+      --accent-soft:   rgba(249,115,22,0.13);
+      --danger:        #DC2626;
+      --warning:       #d97706;
+      --border:        #2A211A;
+      --text:          #FFFFFF;
+      --text-secondary: rgba(255,255,255,0.6);
+      --green:         #22c55e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    header .logo { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+    header .sub  { font-size: 12px; color: var(--text-secondary); }
+
+    #model-status {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--text-secondary);
+      flex-shrink: 0;
+    }
+    .dot.ok      { background: var(--green); }
+    .dot.loading { background: var(--accent); animation: blink 0.7s infinite alternate; }
+    .dot.error   { background: var(--danger); }
+
+    /* ── Main layout ── */
+    main {
+      flex: 1;
+      display: flex;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    /* ── Left: video panel ── */
+    #video-panel {
+      flex: 1 1 60%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      background: #000;
+      position: relative;
+      min-width: 320px;
+    }
+
+    #video-wrap {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #video {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+    }
+
+    #overlay-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      pointer-events: none;
+    }
+
+    /* Drop zone (shown before video loaded) */
+    #dropzone {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      border: 2px dashed var(--border);
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    #dropzone:hover, #dropzone.drag-over { border-color: var(--accent); }
+    #dropzone .icon { font-size: 48px; opacity: 0.4; }
+    #dropzone p { color: var(--text-secondary); font-size: 15px; }
+    #dropzone small { color: var(--text-secondary); font-size: 12px; }
+    #file-input { display: none; }
+
+    /* Controls bar */
+    #controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+    }
+
+    button {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--accent-soft);
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover   { background: rgba(249,115,22,0.25); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.primary  { background: var(--accent); border-color: var(--accent); font-weight: 600; }
+    button.primary:hover { background: #EA580C; }
+    button.danger-btn { background: rgba(220,38,38,0.15); border-color: var(--danger); }
+
+    label.ctrl { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 12px; }
+    select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .sep { width: 1px; height: 22px; background: var(--border); margin: 0 2px; }
+
+    .toggle-group { display: flex; gap: 0; }
+    .toggle-group button {
+      border-radius: 0;
+      border-right-width: 0;
+    }
+    .toggle-group button:first-child { border-radius: 8px 0 0 8px; }
+    .toggle-group button:last-child  { border-radius: 0 8px 8px 0; border-right-width: 1px; }
+    .toggle-group button.active { background: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+    /* ── Right: feedback panel ── */
+    #feedback-panel {
+      width: 340px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .section {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    /* Status */
+    #status-text {
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.4;
+      min-height: 48px;
+      color: var(--text);
+    }
+
+    /* Announcement */
+    #announcement-box {
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 10px 14px;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #announcement-text {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1.4;
+    }
+    #tts-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 5px;
+      white-space: nowrap;
+    }
+    .tts-playing  { background: var(--green);  color: #000; }
+    .tts-cooldown { background: var(--border);  color: var(--text-secondary); }
+    .tts-urgent   { background: var(--danger);  color: #fff; }
+    .tts-ready    { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent); }
+
+    /* Haptic */
+    .haptic-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .haptic-row.danger-active  { border-color: var(--danger);  background: rgba(220,38,38,0.1); }
+    .haptic-row.warning-active { border-color: var(--warning); background: rgba(217,119,6,0.1); }
+
+    .haptic-icon { font-size: 20px; }
+    .haptic-label { flex: 1; }
+    .haptic-label strong { display: block; font-size: 13px; }
+    .haptic-label small  { font-size: 11px; color: var(--text-secondary); }
+    .haptic-pulses { display: flex; gap: 4px; }
+    .pulse-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--border);
+      transition: background 0.1s;
+    }
+    .pulse-dot.active { background: var(--danger); }
+    .pulse-dot.warning-dot.active { background: var(--warning); }
+
+    /* Decision log */
+    #decision-log {
+      font-size: 11px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+    }
+    #decision-log .log-entry { display: flex; gap: 6px; }
+    #decision-log .log-icon { flex-shrink: 0; }
+    .log-ok      { color: var(--green); }
+    .log-filter  { color: var(--warning); }
+    .log-urgent  { color: var(--danger); }
+    .log-info    { color: var(--text-secondary); }
+
+    /* Detections table */
+    #detections-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    #detections-table th {
+      text-align: left;
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 0 6px 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    #detections-table td {
+      padding: 5px 6px;
+      border-bottom: 1px solid rgba(42,33,26,0.5);
+      vertical-align: middle;
+    }
+    #detections-table tr:last-child td { border-bottom: none; }
+    .label-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .label-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .status-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .tag-announced { background: rgba(249,115,22,0.2); color: var(--accent); }
+    .tag-filtered  { background: rgba(217,119,6,0.15); color: var(--warning); }
+    .tag-too-far   { background: var(--border); color: var(--text-secondary); }
+    .tag-urgent    { background: rgba(220,38,38,0.2); color: var(--danger); }
+
+    /* Stats bar */
+    #stats-bar {
+      display: flex;
+      gap: 16px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    #stats-bar span strong { color: var(--text); }
+
+    /* Animations */
+    @keyframes blink   { to { opacity: 0.3; } }
+    @keyframes pulse-r { 0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.6); }
+                         50%      { box-shadow: 0 0 0 8px rgba(220,38,38,0); } }
+    @keyframes pulse-o { 0%,100% { box-shadow: 0 0 0 0 rgba(217,119,6,0.6); }
+                         50%      { box-shadow: 0 0 0 8px rgba(217,119,6,0); } }
+
+    .pulse-anim-danger  { animation: pulse-r 0.5s ease-out; }
+    .pulse-anim-warning { animation: pulse-o 0.5s ease-out; }
+
+    /* No detections */
+    .empty { color: var(--text-secondary); font-size: 12px; padding: 8px 0; }
+
+    /* Model file input */
+    #model-file { display: none; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--surface); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">eyeTech</span>
+  <span class="sub">Detection Test Panel</span>
+  <div id="model-status">
+    <div class="dot" id="model-dot"></div>
+    <span id="model-label">Model yükleniyor…</span>
+    <span id="tts-voice-label" style="font-size:11px;color:var(--text-secondary);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Aktif TTS sesi">—</span>
+    <button onclick="document.getElementById('model-file').click()" style="padding:4px 10px;font-size:11px;">
+      Manuel Yükle
+    </button>
+    <input type="file" id="model-file" accept=".onnx">
+  </div>
+</header>
+
+<main>
+  <!-- ── Left: video ── -->
+  <div id="video-panel">
+    <div id="video-wrap">
+      <video id="video" playsinline muted></video>
+      <canvas id="overlay-canvas"></canvas>
+      <div id="dropzone" onclick="document.getElementById('file-input').click()">
+        <div class="icon">🎬</div>
+        <p>Video yükle</p>
+        <small>MP4, MOV, WebM — sürükle veya tıkla</small>
+      </div>
+    </div>
+    <input type="file" id="file-input" accept="video/*">
+
+    <div id="controls">
+      <button class="primary" id="play-btn" disabled onclick="togglePlay()">▶ Oynat</button>
+      <button id="step-btn" disabled onclick="stepFrame()" title="1 frame ileri">⏭ Frame</button>
+      <button id="reset-btn" disabled onclick="resetVideo()" class="danger-btn">↺ Sıfırla</button>
+      <div class="sep"></div>
+
+      <label class="ctrl">
+        Aralık
+        <select id="interval-sel" onchange="setInterval_()">
+          <option value="500">500ms</option>
+          <option value="1000" selected>1s</option>
+          <option value="2000">2s</option>
+        </select>
+      </label>
+
+      <div class="sep"></div>
+
+      <label class="ctrl">Birim</label>
+      <div class="toggle-group">
+        <button id="unit-metre" class="active" onclick="setUnit('metre')">Metre</button>
+        <button id="unit-adim"              onclick="setUnit('adım')">Adım</button>
+      </div>
+
+      <div class="sep"></div>
+
+      <label class="ctrl">TTS</label>
+      <div class="toggle-group">
+        <button id="tts-on"  class="active" onclick="setTts(true)">Açık</button>
+        <button id="tts-off"              onclick="setTts(false)">Kapalı</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Right: feedback panel ── -->
+  <div id="feedback-panel">
+
+    <!-- Status -->
+    <div class="section">
+      <div class="section-title">Durum</div>
+      <div id="status-text">Başlamak için video yükleyin</div>
+    </div>
+
+    <!-- Announcement -->
+    <div class="section">
+      <div class="section-title">Duyuru (TTS)</div>
+      <div id="announcement-box">
+        <div id="announcement-text">—</div>
+        <div id="tts-badge" class="tts-ready">READY</div>
+      </div>
+    </div>
+
+    <!-- Haptic -->
+    <div class="section">
+      <div class="section-title">Haptic Feedback</div>
+      <div class="haptic-row" id="haptic-danger">
+        <span class="haptic-icon">⚠️</span>
+        <div class="haptic-label">
+          <strong>DANGER</strong>
+          <small>3× Heavy — kişi/araba &lt;%70 bbox veya ≤1.5m</small>
+        </div>
+        <div class="haptic-pulses">
+          <div class="pulse-dot" id="d0"></div>
+          <div class="pulse-dot" id="d1"></div>
+          <div class="pulse-dot" id="d2"></div>
+        </div>
+      </div>
+      <div class="haptic-row" id="haptic-warning">
+        <span class="haptic-icon">🔶</span>
+        <div class="haptic-label">
+          <strong>WARNING</strong>
+          <small>2× Medium — araba %35–%70 bbox veya 1.5–3m</small>
+        </div>
+        <div class="haptic-pulses">
+          <div class="pulse-dot warning-dot" id="w0"></div>
+          <div class="pulse-dot warning-dot" id="w1"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decision log -->
+    <div class="section">
+      <div class="section-title">Karar Logu</div>
+      <div id="decision-log"><span class="log-info">—</span></div>
+    </div>
+
+    <!-- All detections -->
+    <div class="section" style="flex:1">
+      <div class="section-title">Tüm Tespitler</div>
+      <div id="detections-wrap">
+        <div class="empty">Henüz tespit yok</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="stats-bar">
+  <span>FPS: <strong id="stat-fps">—</strong></span>
+  <span>Frame: <strong id="stat-frame">—</strong></span>
+  <span>Inference: <strong id="stat-inf">—</strong></span>
+  <span>Nesne: <strong id="stat-count">—</strong></span>
+  <span>Yakın: <strong id="stat-close">—</strong></span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONSTANTS — mobile app ile birebir eşleşir
+// ═══════════════════════════════════════════════════════════════
+const YOLO_INPUT_SIZE   = 320;
+const CONF_THRESHOLD    = 0.45;
+const IOU_THRESHOLD     = 0.45;
+const NUM_ANCHORS       = 2100;
+const COOLDOWN_MS       = 4000;
+const PROXIMITY_THRESHOLD = 0.15;
+const HAPTIC_COOLDOWN   = 3000;
+const STEP_CM           = 75;
+const FOCAL_LENGTH_PX   = 229;
+const INPUT_HEIGHT_PX   = 320;
+
+const TRACKED = new Map([
+  [0,  'person'], [1,  'bicycle'], [2,  'car'],
+  [5,  'bus'],    [7,  'truck'],   [15, 'cat'], [16, 'dog'],
+]);
+
+const PRIORITY_ORDER    = ['person', 'car', 'dog', 'bicycle', 'truck', 'bus', 'cat'];
+const SUPPRESSOR_LABELS = new Set(['person', 'car', 'truck', 'bus']);
+
+const KNOWN_HEIGHTS_M = {
+  person: 1.70, car: 1.50, dog: 0.50,
+  bicycle: 1.00, truck: 2.50, bus: 3.00, cat: 0.30,
+};
+
+const LABELS = {
+  person:  { tr: 'kişi',     noDistPrefix: 'Önünüzde' },
+  car:     { tr: 'araba',    noDistPrefix: 'Yakınınızda' },
+  dog:     { tr: 'köpek',    noDistPrefix: 'Yakınınızda' },
+  bicycle: { tr: 'bisiklet', noDistPrefix: 'Yakınınızda' },
+  truck:   { tr: 'kamyon',   noDistPrefix: 'Yakınınızda' },
+  bus:     { tr: 'otobüs',   noDistPrefix: 'Yakınınızda' },
+  cat:     { tr: 'kedi',     noDistPrefix: 'Yakınınızda' },
+};
+
+const BBOX_COLORS = {
+  person: '#00FF88', car: '#FF4444', dog: '#FFD700',
+  bicycle: '#00CFFF', truck: '#FF8C00', bus: '#FF69B4', cat: '#BF5FFF',
+};
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let session         = null;
+let isRunning       = false;
+let loopTimer       = null;
+let detIntervalMs   = 1000;
+let distanceUnit    = 'metre';
+let ttsEnabled      = true;
+let isSpeaking      = false;
+let lastSpokenAt    = {};
+let hapticLastFired = { danger: 0, warning: 0 };
+let frameCount      = 0;
+let lastFrameTime   = 0;
+
+// ═══════════════════════════════════════════════════════════════
+// MODEL LOADING
+// ═══════════════════════════════════════════════════════════════
+async function loadModel(src) {
+  setModelStatus('loading', 'Yükleniyor…');
+  try {
+    ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/';
+    session = await ort.InferenceSession.create(src, { executionProviders: ['wasm'] });
+    setModelStatus('ok', 'Model hazır ✓');
+  } catch (e) {
+    setModelStatus('error', 'Model hatası — ' + e.message);
+    console.error(e);
+  }
+}
+
+function setModelStatus(state, text) {
+  const dot = document.getElementById('model-dot');
+  const lbl = document.getElementById('model-label');
+  dot.className = 'dot ' + state;
+  lbl.textContent = text;
+}
+
+// ── Auto-load from relative path ──
+loadModel('../mobile/MLModels/yolo11n.onnx');
+
+// ── Manual model file override ──
+document.getElementById('model-file').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const buf = await file.arrayBuffer();
+  await loadModel(buf);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// VIDEO SETUP
+// ═══════════════════════════════════════════════════════════════
+const video    = document.getElementById('video');
+const canvas   = document.getElementById('overlay-canvas');
+const ctx2d    = canvas.getContext('2d');
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+
+fileInput.addEventListener('change', e => loadVideo(e.target.files[0]));
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('video/')) loadVideo(f);
+});
+
+function loadVideo(file) {
+  const url = URL.createObjectURL(file);
+  video.src = url;
+  video.load();
+  dropzone.style.display = 'none';
+  document.getElementById('play-btn').disabled = false;
+  document.getElementById('step-btn').disabled = false;
+  document.getElementById('reset-btn').disabled = false;
+  setStatus('Hazır — Oynat\'a basın');
+}
+
+video.addEventListener('ended', () => {
+  stopLoop();
+  document.getElementById('play-btn').textContent = '▶ Oynat';
+});
+
+video.addEventListener('loadedmetadata', () => {
+  syncCanvas();
+});
+
+window.addEventListener('resize', syncCanvas);
+
+function syncCanvas() {
+  const rect = video.getBoundingClientRect();
+  canvas.style.left   = video.offsetLeft + 'px';
+  canvas.style.top    = video.offsetTop  + 'px';
+  canvas.width        = video.videoWidth  || video.clientWidth;
+  canvas.height       = video.videoHeight || video.clientHeight;
+  canvas.style.width  = (video.videoWidth  || video.clientWidth)  + 'px';
+  canvas.style.height = (video.videoHeight || video.clientHeight) + 'px';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════════════════════════
+function togglePlay() {
+  if (video.paused) {
+    video.play();
+    document.getElementById('play-btn').textContent = '⏸ Duraklat';
+    startLoop();
+  } else {
+    video.pause();
+    document.getElementById('play-btn').textContent = '▶ Oynat';
+    stopLoop();
+  }
+}
+
+function resetVideo() {
+  video.pause();
+  video.currentTime = 0;
+  stopLoop();
+  document.getElementById('play-btn').textContent = '▶ Oynat';
+  ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+  setStatus('Sıfırlandı');
+  updateDetectionsTable([], [], null);
+}
+
+function stepFrame() {
+  if (!video.paused) { video.pause(); document.getElementById('play-btn').textContent = '▶ Oynat'; stopLoop(); }
+  video.currentTime += 1 / 30;
+  setTimeout(runOnce, 100);
+}
+
+function setInterval_() {
+  detIntervalMs = parseInt(document.getElementById('interval-sel').value);
+  if (isRunning) { stopLoop(); startLoop(); }
+}
+
+function setUnit(u) {
+  distanceUnit = u;
+  document.getElementById('unit-metre').classList.toggle('active', u === 'metre');
+  document.getElementById('unit-adim').classList.toggle('active',  u === 'adım');
+}
+
+function setTts(v) {
+  ttsEnabled = v;
+  document.getElementById('tts-on').classList.toggle('active',  v);
+  document.getElementById('tts-off').classList.toggle('active', !v);
+  if (!v) window.speechSynthesis.cancel();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DETECTION LOOP
+// ═══════════════════════════════════════════════════════════════
+function startLoop() {
+  if (isRunning) return;
+  isRunning = true;
+  scheduleNext();
+}
+
+function stopLoop() {
+  isRunning = false;
+  if (loopTimer) { clearTimeout(loopTimer); loopTimer = null; }
+}
+
+function scheduleNext() {
+  if (!isRunning) return;
+  loopTimer = setTimeout(runOnce, detIntervalMs);
+}
+
+async function runOnce() {
+  if (!session) { scheduleNext(); return; }
+  if (video.readyState < 2) { scheduleNext(); return; }
+
+  const t0 = performance.now();
+
+  // ── 1. YOLO inference ──
+  let yoloDets = [];
+  try {
+    yoloDets = await runYolo();
+  } catch (e) {
+    console.error('Inference error:', e);
+    scheduleNext();
+    return;
+  }
+  const inferenceMs = Math.round(performance.now() - t0);
+
+  // ── 2. Build DetectedObject list ──
+  const detected = buildDetectedObjects(yoloDets);
+
+  // ── 3. Draw bounding boxes ──
+  drawBoxes(detected);
+
+  // ── 4. Haptic evaluation (tüm nesneler) ──
+  const hapticResult = evaluateHaptics(detected);
+
+  // ── 5. Filter pipeline ──
+  const close    = detected.filter(isCloseEnough);
+  const filtered = filterByHighPriority(close);
+  const sorted   = prioritizeDetections(filtered);
+
+  // ── 6. Determine top object ──
+  const top = sorted[0] ?? null;
+  const message = top ? buildAnnouncement(top) : null;
+
+  // ── 7. TTS ──
+  let ttsMode = 'none';
+  if (top && message) {
+    if (isUrgentThreat(top) && isSpeaking) {
+      ttsMode = 'urgent';
+      speakText(message, top.label, true);
+    } else {
+      ttsMode = speakText(message, top.label, false);
+    }
+  }
+
+  // ── 8. Update UI ──
+  setStatus(top ? 'Taranıyor…' : 'Nesne bulunamadı');
+  updateAnnouncement(message, ttsMode);
+  updateDecisionLog(detected, close, filtered, sorted, top);
+  updateDetectionsTable(detected, sorted, top);
+  updateStats(inferenceMs, detected.length, close.length);
+
+  // ── FPS ──
+  const now = performance.now();
+  if (lastFrameTime) {
+    const fps = Math.round(1000 / (now - lastFrameTime));
+    document.getElementById('stat-fps').textContent = fps;
+  }
+  lastFrameTime = now;
+  frameCount++;
+  document.getElementById('stat-frame').textContent = frameCount;
+
+  scheduleNext();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// YOLO PREPROCESSING + INFERENCE + NMS
+// ═══════════════════════════════════════════════════════════════
+function preprocessFrame() {
+  const offscreen = document.createElement('canvas');
+  offscreen.width  = YOLO_INPUT_SIZE;
+  offscreen.height = YOLO_INPUT_SIZE;
+  const c = offscreen.getContext('2d');
+  c.drawImage(video, 0, 0, YOLO_INPUT_SIZE, YOLO_INPUT_SIZE);
+  const px   = c.getImageData(0, 0, YOLO_INPUT_SIZE, YOLO_INPUT_SIZE).data;
+  const size = YOLO_INPUT_SIZE * YOLO_INPUT_SIZE;
+  const f32  = new Float32Array(3 * size);
+  for (let i = 0; i < size; i++) {
+    f32[i]          = px[i * 4]     / 255;
+    f32[size + i]   = px[i * 4 + 1] / 255;
+    f32[size*2 + i] = px[i * 4 + 2] / 255;
+  }
+  return f32;
+}
+
+async function runYolo() {
+  const f32   = preprocessFrame();
+  const input = new ort.Tensor('float32', f32, [1, 3, YOLO_INPUT_SIZE, YOLO_INPUT_SIZE]);
+  const res   = await session.run({ images: input });
+
+  const out   = res['output0'] || res[Object.keys(res)[0]];
+  if (!out) return [];
+  const data  = out.data;
+  const raw   = [];
+
+  for (let i = 0; i < NUM_ANCHORS; i++) {
+    let maxScore = 0, bestId = -1;
+    for (const [id] of TRACKED) {
+      const s = data[(id + 4) * NUM_ANCHORS + i];
+      if (s > maxScore) { maxScore = s; bestId = id; }
+    }
+    if (maxScore < CONF_THRESHOLD || bestId === -1) continue;
+    const cx = data[0 * NUM_ANCHORS + i];
+    const cy = data[1 * NUM_ANCHORS + i];
+    const w  = data[2 * NUM_ANCHORS + i];
+    const h  = data[3 * NUM_ANCHORS + i];
+    raw.push({ label: TRACKED.get(bestId), confidence: maxScore,
+      x1: cx - w/2, y1: cy - h/2, x2: cx + w/2, y2: cy + h/2 });
+  }
+  return nms(raw);
+}
+
+function nms(dets) {
+  const sorted = [...dets].sort((a, b) => b.confidence - a.confidence);
+  const kept   = [];
+  for (const d of sorted)
+    if (!kept.some(k => iou(d, k) > IOU_THRESHOLD)) kept.push(d);
+  return kept;
+}
+
+function iou(a, b) {
+  const ix1 = Math.max(a.x1, b.x1), iy1 = Math.max(a.y1, b.y1);
+  const ix2 = Math.min(a.x2, b.x2), iy2 = Math.min(a.y2, b.y2);
+  const inter = Math.max(0, ix2-ix1) * Math.max(0, iy2-iy1);
+  return inter / ((a.x2-a.x1)*(a.y2-a.y1) + (b.x2-b.x1)*(b.y2-b.y1) - inter);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BUILD DetectedObject (mlPipeline.ts port)
+// ═══════════════════════════════════════════════════════════════
+function buildDetectedObjects(yoloDets) {
+  return yoloDets.map(det => {
+    const left  = det.x1 / YOLO_INPUT_SIZE;
+    const top   = det.y1 / YOLO_INPUT_SIZE;
+    const bboxW = (det.x2 - det.x1) / YOLO_INPUT_SIZE;
+    const bboxH = (det.y2 - det.y1) / YOLO_INPUT_SIZE;
+    return {
+      label: det.label,
+      confidence: det.confidence,
+      distanceMeters: estimateDistance(det.label, bboxH),
+      boundingBox: { left, top, width: bboxW, height: bboxH },
+    };
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DISTANCE ESTIMATION (distanceUtils.ts port)
+// ═══════════════════════════════════════════════════════════════
+function estimateDistance(label, bboxH) {
+  const kh = KNOWN_HEIGHTS_M[label];
+  if (!kh || bboxH <= 0.02) return -1;
+  const d = (kh * FOCAL_LENGTH_PX) / (bboxH * INPUT_HEIGHT_PX);
+  if (d < 0.3 || d > 20) return -1;
+  return Math.round(d * 10) / 10;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FILTER PIPELINE (announcementUtils.ts port)
+// ═══════════════════════════════════════════════════════════════
+function isCloseEnough(obj) {
+  if (obj.distanceMeters > 0) return obj.distanceMeters <= 5;
+  if (!obj.boundingBox) return true;
+  return obj.boundingBox.width * obj.boundingBox.height >= PROXIMITY_THRESHOLD;
+}
+
+function isUrgentThreat(obj) {
+  if (obj.label !== 'person') return false;
+  if (obj.distanceMeters > 0) return obj.distanceMeters <= 2;
+  return !!(obj.boundingBox && obj.boundingBox.height >= 0.61);
+}
+
+function filterByHighPriority(objects) {
+  const has = objects.some(o => SUPPRESSOR_LABELS.has(o.label));
+  if (!has) return objects;
+  return objects.filter(o => SUPPRESSOR_LABELS.has(o.label));
+}
+
+function prioritizeDetections(objects) {
+  return [...objects].sort((a, b) => {
+    const ai = PRIORITY_ORDER.indexOf(a.label), bi = PRIORITY_ORDER.indexOf(b.label);
+    const ap = ai < 0 ? 999 : ai, bp = bi < 0 ? 999 : bi;
+    if (ap !== bp) return ap - bp;
+    const ad = a.distanceMeters > 0 ? a.distanceMeters : 999;
+    const bd = b.distanceMeters > 0 ? b.distanceMeters : 999;
+    return ad - bd;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ANNOUNCEMENT (announcementUtils.ts + unitService.ts port)
+// ═══════════════════════════════════════════════════════════════
+function formatDistance(m) {
+  if (!m || m <= 0) return null;
+  if (distanceUnit === 'metre') return m + ' metre';
+  return Math.round((m * 100) / STEP_CM) + ' adım';
+}
+
+function buildAnnouncement(obj) {
+  const e = LABELS[obj.label] || { tr: obj.label, noDistPrefix: 'Yakınınızda' };
+  const d = formatDistance(obj.distanceMeters);
+  return d ? `${d} uzağınızda bir ${e.tr} var` : `${e.noDistPrefix} bir ${e.tr} var`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TTS (ttsService.ts port — Web Speech API)
+// ═══════════════════════════════════════════════════════════════
+
+// Chrome'da getVoices() ilk çağrıda boş döner; voiceschanged eventi gerekir
+let turkishVoice = null;
+
+function loadVoices() {
+  const voices = window.speechSynthesis.getVoices();
+  // Önce tr-TR, yoksa tr ile başlayan herhangi bir ses
+  turkishVoice = voices.find(v => v.lang === 'tr-TR')
+             || voices.find(v => v.lang.startsWith('tr'))
+             || null;
+  const lbl = document.getElementById('tts-voice-label');
+  if (lbl) lbl.textContent = turkishVoice ? turkishVoice.name : 'Türkçe ses bulunamadı';
+}
+
+window.speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function speakText(text, objectClass, urgent) {
+  if (!ttsEnabled) return 'disabled';
+  const key = objectClass || text;
+  const now = Date.now();
+  if (!urgent && lastSpokenAt[key] && now - lastSpokenAt[key] < COOLDOWN_MS) return 'cooldown';
+  if (urgent && isSpeaking) window.speechSynthesis.cancel();
+  lastSpokenAt[key] = now;
+  const utter  = new SpeechSynthesisUtterance(text);
+  utter.lang   = 'tr-TR';
+  utter.rate   = 0.9;
+  utter.pitch  = 1.0;
+  if (turkishVoice) utter.voice = turkishVoice; // açık atama olmadan tarayıcı default (İngilizce) seçer
+  utter.onstart = () => { isSpeaking = true; };
+  utter.onend   = () => { isSpeaking = false; };
+  utter.onerror = () => { isSpeaking = false; };
+  window.speechSynthesis.speak(utter);
+  return urgent ? 'urgent' : 'playing';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HAPTIC SIMULATION (proximityHaptics.ts port)
+// ═══════════════════════════════════════════════════════════════
+function isDangerClose(o) {
+  if (o.label !== 'person' && o.label !== 'car') return false;
+  if ((o.boundingBox?.height ?? 0) >= 0.7) return true;
+  return o.distanceMeters > 0 && o.distanceMeters <= 1.5;
+}
+function isWarningClose(o) {
+  if (o.label !== 'car') return false;
+  const h = o.boundingBox?.height ?? 0;
+  if (h >= 0.35 && h < 0.7) return true;
+  const d = o.distanceMeters ?? -1;
+  return d > 1.5 && d <= 3;
+}
+
+function evaluateHaptics(objects) {
+  const now = Date.now();
+  if (objects.some(isDangerClose)) {
+    if (now - hapticLastFired.danger > HAPTIC_COOLDOWN) {
+      hapticLastFired.danger = now;
+      animateHaptic('danger', 3);
+      return 'danger';
+    }
+    return null;
+  }
+  if (objects.some(isWarningClose)) {
+    if (now - hapticLastFired.warning > HAPTIC_COOLDOWN) {
+      hapticLastFired.warning = now;
+      animateHaptic('warning', 2);
+      return 'warning';
+    }
+  }
+  return null;
+}
+
+function animateHaptic(level, count) {
+  const row  = document.getElementById('haptic-' + level);
+  const dots = level === 'danger'
+    ? [document.getElementById('d0'), document.getElementById('d1'), document.getElementById('d2')]
+    : [document.getElementById('w0'), document.getElementById('w1')];
+
+  row.classList.add(level + '-active');
+  dots.forEach(d => d && d.classList.remove('active'));
+
+  let i = 0;
+  const fire = () => {
+    if (i < count) {
+      if (dots[i]) dots[i].classList.add('active');
+      i++;
+      setTimeout(fire, 160);
+    } else {
+      setTimeout(() => {
+        row.classList.remove(level + '-active');
+        dots.forEach(d => d && d.classList.remove('active'));
+      }, 600);
+    }
+  };
+  fire();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CANVAS — bounding box overlay
+// ═══════════════════════════════════════════════════════════════
+function drawBoxes(detected) {
+  ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+
+  for (const obj of detected) {
+    if (!obj.boundingBox) continue;
+    const { left, top, width, height } = obj.boundingBox;
+    const color = BBOX_COLORS[obj.label] || '#fff';
+
+    ctx2d.strokeStyle = color;
+    ctx2d.lineWidth   = 2;
+    ctx2d.strokeRect(left * W, top * H, width * W, height * H);
+
+    // label chip
+    const dist  = obj.distanceMeters > 0 ? obj.distanceMeters + 'm' : '—';
+    const label = `${obj.label} ${Math.round(obj.confidence*100)}% ${dist}`;
+    ctx2d.font      = 'bold 11px -apple-system, sans-serif';
+    const tw        = ctx2d.measureText(label).width;
+    const chipH     = 18, chipY = top * H - chipH - 2;
+    ctx2d.fillStyle = color;
+    ctx2d.fillRect(left * W, chipY, tw + 10, chipH);
+    ctx2d.fillStyle = '#000';
+    ctx2d.fillText(label, left * W + 5, chipY + 12);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UI UPDATE FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+function setStatus(text) {
+  document.getElementById('status-text').textContent = text;
+}
+
+function updateAnnouncement(message, ttsMode) {
+  const annoText  = document.getElementById('announcement-text');
+  const ttsBadge  = document.getElementById('tts-badge');
+
+  annoText.textContent = message || '—';
+
+  const modes = {
+    playing:  ['tts-playing',  'KONUŞUYOR'],
+    urgent:   ['tts-urgent',   '⚡ ACİL KES'],
+    cooldown: ['tts-cooldown', 'COOLDOWN'],
+    disabled: ['tts-cooldown', 'KAPALI'],
+    none:     ['tts-ready',    'READY'],
+  };
+  const [cls, label] = modes[ttsMode] || modes.none;
+  ttsBadge.className = 'tts-badge ' + cls;
+  ttsBadge.textContent = label;
+}
+
+function updateDecisionLog(detected, close, filtered, sorted, top) {
+  const log = document.getElementById('decision-log');
+  if (!detected.length) { log.innerHTML = '<span class="log-info">Tespit yok</span>'; return; }
+
+  const lines = [];
+  lines.push(`<div class="log-entry log-info"><span class="log-icon">🔍</span><span>${detected.length} nesne tespit edildi: ${detected.map(o => `<b>${o.label}</b>${o.distanceMeters > 0 ? ' ' + o.distanceMeters + 'm' : ''}`).join(', ')}</span></div>`);
+
+  const tooFar = detected.filter(o => !isCloseEnough(o));
+  if (tooFar.length) lines.push(`<div class="log-entry log-info"><span class="log-icon">📏</span><span>Uzak elendi: ${tooFar.map(o => o.label).join(', ')}</span></div>`);
+
+  const suppressed = close.filter(o => !filtered.includes(o));
+  if (suppressed.length) lines.push(`<div class="log-entry log-filter"><span class="log-icon">🚫</span><span>Baskılayıcı grup aktif → elendi: ${suppressed.map(o => o.label).join(', ')}</span></div>`);
+
+  if (top) {
+    const urgent = isUrgentThreat(top);
+    lines.push(`<div class="log-entry ${urgent ? 'log-urgent' : 'log-ok'}"><span class="log-icon">${urgent ? '⚡' : '📢'}</span><span>${urgent ? 'ACİL TEHDİT — ' : ''}Duyuru: "<b>${buildAnnouncement(top)}</b>"</span></div>`);
+  }
+
+  log.innerHTML = lines.join('');
+}
+
+function updateDetectionsTable(detected, announced, top) {
+  const wrap = document.getElementById('detections-wrap');
+  if (!detected.length) { wrap.innerHTML = '<div class="empty">Henüz tespit yok</div>'; return; }
+
+  const closeSet    = new Set(detected.filter(isCloseEnough));
+  const announcedSet = new Set(announced);
+
+  let html = `<table id="detections-table">
+    <thead><tr>
+      <th>Nesne</th><th>Güven</th><th>Mesafe</th><th>BBox H</th><th>Durum</th>
+    </tr></thead><tbody>`;
+
+  for (const obj of detected) {
+    const color = BBOX_COLORS[obj.label] || '#fff';
+    const dist  = obj.distanceMeters > 0 ? obj.distanceMeters + 'm' : '—';
+    const bboxH = obj.boundingBox ? Math.round(obj.boundingBox.height * 100) + '%' : '—';
+    const isClose = closeSet.has(obj);
+    const isAnnounced = announcedSet.includes ? announcedSet.includes(obj) : announced.includes(obj);
+    const isTop   = obj === top;
+    const urgent  = isTop && isUrgentThreat(obj);
+
+    let statusHtml;
+    if (isTop && urgent)     statusHtml = '<span class="status-tag tag-urgent">⚡ ACİL</span>';
+    else if (isTop)          statusHtml = '<span class="status-tag tag-announced">📢 Duyuruldu</span>';
+    else if (!isClose)       statusHtml = '<span class="status-tag tag-too-far">Uzak</span>';
+    else                     statusHtml = '<span class="status-tag tag-filtered">Baskılandı</span>';
+
+    html += `<tr>
+      <td><span class="label-chip">
+        <span class="label-dot" style="background:${color}"></span>
+        ${obj.label}
+      </span></td>
+      <td>${Math.round(obj.confidence * 100)}%</td>
+      <td>${dist}</td>
+      <td>${bboxH}</td>
+      <td>${statusHtml}</td>
+    </tr>`;
+  }
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function updateStats(inferenceMs, total, close) {
+  document.getElementById('stat-inf').textContent   = inferenceMs + 'ms';
+  document.getElementById('stat-count').textContent = total;
+  document.getElementById('stat-close').textContent = close;
+}
+</script>
+</body>
+</html>
