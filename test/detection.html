@@ -400,6 +400,15 @@
         <button id="tts-on"  class="active" onclick="setTts(true)">Açık</button>
         <button id="tts-off"              onclick="setTts(false)">Kapalı</button>
       </div>
+
+      <div class="sep"></div>
+
+      <label class="ctrl">
+        Hız <strong id="tts-rate-val" style="color:var(--accent);min-width:28px;display:inline-block;">0.9</strong>
+        <input type="range" id="tts-rate" min="0.5" max="2.0" step="0.1" value="0.9"
+          style="width:80px;accent-color:var(--accent);cursor:pointer;"
+          oninput="setTtsRate(this.value)">
+      </label>
     </div>
   </div>
 
@@ -526,6 +535,7 @@ let loopTimer       = null;
 let detIntervalMs   = 1000;
 let distanceUnit    = 'metre';
 let ttsEnabled      = true;
+let ttsRate         = 0.9;
 let isSpeaking      = false;
 let lastSpokenAt    = {};
 let hapticLastFired = { danger: 0, warning: 0 };
@@ -684,6 +694,11 @@ function setTts(v) {
   document.getElementById('tts-on').classList.toggle('active',  v);
   document.getElementById('tts-off').classList.toggle('active', !v);
   if (!v) window.speechSynthesis.cancel();
+}
+
+function setTtsRate(v) {
+  ttsRate = parseFloat(v);
+  document.getElementById('tts-rate-val').textContent = ttsRate.toFixed(1);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -938,7 +953,7 @@ function speakText(text, objectClass, urgent) {
   lastSpokenAt[key] = now;
   const utter  = new SpeechSynthesisUtterance(text);
   utter.lang   = 'tr-TR';
-  utter.rate   = 0.9;
+  utter.rate   = ttsRate;
   utter.pitch  = 1.0;
   if (turkishVoice) utter.voice = turkishVoice; // açık atama olmadan tarayıcı default (İngilizce) seçer
   utter.onstart = () => { isSpeaking = true; };
