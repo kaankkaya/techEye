@@ -10,7 +10,8 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "TechEye uses the camera to detect nearby objects and people.",
-        "NSMicrophoneUsageDescription": "TechEye uses the microphone for audio feedback."
+        "NSMicrophoneUsageDescription": "TechEye uses the microphone for audio feedback.",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "bundleIdentifier": "com.kaankaya.techeye"
     },
@@ -39,6 +40,12 @@
       ],
       "expo-splash-screen",
       "expo-asset"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "49a425d4-cffe-4c53-b432-592cdd24c573"
+      }
+    },
+    "owner": "rohnin"
   }
 }
