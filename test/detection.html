@@ -585,16 +585,36 @@ dropzone.addEventListener('drop', e => {
   if (f && f.type.startsWith('video/')) loadVideo(f);
 });
 
-function loadVideo(file) {
-  const url = URL.createObjectURL(file);
+function loadVideoFromUrl(url, displayName) {
   video.src = url;
   video.load();
   dropzone.style.display = 'none';
   document.getElementById('play-btn').disabled = false;
   document.getElementById('step-btn').disabled = false;
   document.getElementById('reset-btn').disabled = false;
-  setStatus('Hazır — Oynat\'a basın');
+  setStatus((displayName ? displayName + ' — ' : '') + 'Oynat\'a basın');
 }
+
+function loadVideo(file) {
+  loadVideoFromUrl(URL.createObjectURL(file), file.name);
+}
+
+async function autoLoadVideo() {
+  try {
+    const res = await fetch('../test-videos/');
+    if (!res.ok) return;
+    const html = await res.text();
+    const doc  = new DOMParser().parseFromString(html, 'text/html');
+    const href = [...doc.querySelectorAll('a[href]')]
+      .map(a => a.getAttribute('href'))
+      .find(h => /\.(webm|mp4|mov|avi|mkv)$/i.test(h));
+    if (href) loadVideoFromUrl('../test-videos/' + href, decodeURIComponent(href));
+  } catch (e) {
+    console.warn('[eyeTech] Video auto-load başarısız:', e);
+  }
+}
+
+autoLoadVideo();
 
 video.addEventListener('ended', () => {
   stopLoop();
