@@ -13,6 +13,9 @@ export type DetectedObject = {
 };
 
 const PRIORITY_ORDER = ['person', 'car', 'dog', 'bicycle', 'truck', 'bus', 'cat'];
+
+// Bu gruptaki nesneler yakındaysa düşük öncelikli nesneler (dog, bicycle, cat) duyurulmaz
+const SUPPRESSOR_LABELS = new Set(['person', 'car', 'truck', 'bus']);
 const PROXIMITY_THRESHOLD = 0.15;
 
 const LABELS: Record<string, { tr: string; noDistPrefix: string }> = {
@@ -44,6 +47,21 @@ export function isCloseEnough(obj: DetectedObject): boolean {
   }
   if (!obj.boundingBox) return true;
   return obj.boundingBox.width * obj.boundingBox.height >= PROXIMITY_THRESHOLD;
+}
+
+// Person ≤ 2m → acil tehdit (bbox fallback: yükseklik ≥ %61 ≈ 2m)
+export function isUrgentThreat(obj: DetectedObject): boolean {
+  if (obj.label.toLowerCase() !== 'person') return false;
+  if (obj.distanceMeters && obj.distanceMeters > 0) {
+    return obj.distanceMeters <= 2;
+  }
+  return !!(obj.boundingBox && obj.boundingBox.height >= 0.61);
+}
+
+export function filterByHighPriority(objects: DetectedObject[]): DetectedObject[] {
+  const hasSupressor = objects.some(o => SUPPRESSOR_LABELS.has(o.label.toLowerCase()));
+  if (!hasSupressor) return objects;
+  return objects.filter(o => SUPPRESSOR_LABELS.has(o.label.toLowerCase()));
 }
 
 export function prioritizeDetections(objects: DetectedObject[]): DetectedObject[] {

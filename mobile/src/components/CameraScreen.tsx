@@ -10,10 +10,12 @@ import AppText from './AppText';
 import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import { detectObjects } from '../detection/detectionService';
 import { initModels } from '../detection/mlPipeline';
-import { speak, stopSpeaking } from '../tts/ttsService';
+import { speak, speakUrgent, isSpeakingNow, stopSpeaking } from '../tts/ttsService';
 import {
   buildAnnouncement,
   isCloseEnough,
+  isUrgentThreat,
+  filterByHighPriority,
   prioritizeDetections,
   DetectedObject,
 } from '../utils/announcementUtils';
@@ -24,16 +26,16 @@ import { FontAwesome6 } from '@expo/vector-icons';
 import SettingsScreen from './SettingsScreen';
 import ScanningEye from './ScanningEye';
 
-const DETECTION_INTERVAL_MS = 1000;
+const DETECTION_INTERVAL_MS = 500;
 
 const BBOX_COLORS: Record<string, string> = {
-  person:  '#00FF88',
-  car:     '#FF4444',
-  dog:     '#FFD700',
+  person: '#00FF88',
+  car: '#FF4444',
+  dog: '#FFD700',
   bicycle: '#00CFFF',
-  truck:   '#FF8C00',
-  bus:     '#FF69B4',
-  cat:     '#BF5FFF',
+  truck: '#FF8C00',
+  bus: '#FF69B4',
+  cat: '#BF5FFF',
 };
 
 export default function CameraScreen() {
@@ -42,6 +44,7 @@ export default function CameraScreen() {
   const [isScanning, setIsScanning] = useState(false);
   const [statusText, setStatusText] = useState('Başlamak için Tara\'ya basın');
   const [devMode, setDevMode] = useState(false);
+  const [memStats, setMemStats] = useState<{ used: number; total: number } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('gelismis');
   const [debugDetections, setDebugDetections] = useState<DetectedObject[]>([]);
@@ -94,14 +97,19 @@ export default function CameraScreen() {
       evaluateProximityHaptics(detected);
 
       const close = detected.filter(isCloseEnough);
-      const sorted = prioritizeDetections(close);
+      const filtered = filterByHighPriority(close);
+      const sorted = prioritizeDetections(filtered);
 
       if (sorted.length > 0) {
         const top = sorted[0];
         const message = buildAnnouncement(top);
         console.log(`[eyeTech] Announcing: "${message}"`);
         setStatusText(message);
-        await speak(message, top.label);
+        if (isUrgentThreat(top) && isSpeakingNow()) {
+          speakUrgent(message, top.label);
+        } else {
+          await speak(message, top.label);
+        }
       } else {
         setStatusText('');
       }
@@ -145,8 +153,23 @@ export default function CameraScreen() {
     const next = !devModeRef.current;
     devModeRef.current = next;
     setDevMode(next);
-    if (!next) setDebugDetections([]);
+    if (!next) { setDebugDetections([]); setMemStats(null); }
   }, []);
+
+  useEffect(() => {
+    if (!devMode) return;
+    const readMem = () => {
+      const mem = (performance as any).memory;
+      if (!mem) return;
+      setMemStats({
+        used: Math.round(mem.usedJSHeapSize / 1024 / 1024),
+        total: Math.round(mem.totalJSHeapSize / 1024 / 1024),
+      });
+    };
+    readMem();
+    const id = setInterval(readMem, 1000);
+    return () => clearInterval(id);
+  }, [devMode]);
 
   useEffect(() => {
     loadDisplayMode().then(setDisplayMode);
@@ -207,10 +230,10 @@ export default function CameraScreen() {
               <View
                 key={i}
                 style={[styles.bbox, {
-                  left:        left   * screenWidth,
-                  top:         top    * screenHeight,
-                  width:       width  * screenWidth,
-                  height:      height * screenHeight,
+                  left: left * screenWidth,
+                  top: top * screenHeight,
+                  width: width * screenWidth,
+                  height: height * screenHeight,
                   borderColor: color,
                 }]}
               >
@@ -273,6 +296,14 @@ export default function CameraScreen() {
         </AppText>
       </HapticButton>
 
+      {devMode && memStats && (
+        <View style={[styles.memChip, { backgroundColor: theme.overlay, borderColor: theme.border }]}>
+          <AppText weight="bold" size={10} style={{ color: theme.accent }}>
+            {`MEM  ${memStats.used}MB / ${memStats.total}MB`}
+          </AppText>
+        </View>
+      )}
+
       <Modal
         visible={settingsOpen}
         animationType="slide"
@@ -310,7 +341,7 @@ export default function CameraScreen() {
             accessibilityLabel={isScanning ? 'Taramayı durdur' : 'Taramayı başlat'}
             accessibilityHint={isScanning ? 'Nesne algılamayı durdurur' : 'Kamera ile nesne algılamayı başlatır'}
             accessibilityRole="button"
-            onPressIn={() => {}}
+            onPressIn={() => { }}
           >
             <AppText weight="bold" size={22} style={{ color: isScanning ? theme.text : theme.textSecondary }}>
               {isScanning ? 'Durdur' : 'Tara'}
@@ -395,6 +426,15 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   devButtonText: { letterSpacing: 1 },
+  memChip: {
+    position: 'absolute',
+    top: 104,
+    right: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
   bbox: {
     position: 'absolute',
     borderWidth: 2,

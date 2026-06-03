@@ -333,6 +333,20 @@ Aynı öncelikte birden fazla nesne varsa en yakın (düşük `distanceMeters`) 
 - `distanceMeters` hesaplandıysa: `<= 5m` → yakın
 - Hesaplanamadıysa: `boundingBox.width × height >= 0.15`
 
+### Yüksek Öncelik Baskılama
+
+`filterByHighPriority()`:
+
+Yakın nesneler arasında **baskılayıcı grup** (person, car, truck, bus) varsa, düşük öncelikli nesneler (dog, bicycle, cat) o döngüde görmezden gelinir. Yalnızca baskılayıcı grubu üzerinden duyuru yapılır.
+
+| Senaryo | Sonuç |
+|---|---|
+| person 1m + kedi 5m → ikisi de yakın | Sadece kişi duyurulur |
+| kamyon 3m + bisiklet 2m → ikisi de yakın | Sadece kamyon duyurulur |
+| köpek 2m + bisiklet 1m → baskılayıcı yok | En yüksek öncelikli yakın nesne (köpek) duyurulur |
+
+Baskılayıcı grup: `SUPPRESSOR_LABELS = ['person', 'car', 'truck', 'bus']`
+
 ---
 
 ## ML Pipeline (Lokal — Sunucusuz)
@@ -408,6 +422,17 @@ URI → expo-image-manipulator → resize (target × target) → JPEG base64
 - Pitch: `1.0`
 - Cooldown: Her `objectClass` için bağımsız `4000ms`
 - Cooldown dolmadıysa aynı label için duyuru yapılmaz
+
+### Acil Kesme (Urgent Interrupt)
+
+`isUrgentThreat()`: Tespit edilen nesne `person` ve mesafe ≤ 2m ise acil tehdit sayılır.
+- Mesafe bilinmiyorsa bbox yüksekliği ≥ %61 kullanılır (pinhole modeline göre ≈ 2m)
+
+**Davranış:** Acil tehdit tespit edildiğinde ve o anda başka bir TTS aktifse (`isSpeakingNow() === true`):
+1. Mevcut ses kesilir (`Speech.stop()`)
+2. Kişi duyurusu cooldown'u yok sayarak anında oynatılır (`speakUrgent()`)
+
+Eğer o anda hiçbir ses aktif değilse → normal `speak()` akışı (cooldown uygulanır).
 
 **Ses seçimi:**
 - `initTTS()` uygulama açılışında (`App.tsx`) çağrılır; `AsyncStorage`'dan kayıtlı ses identifier'ını yükler

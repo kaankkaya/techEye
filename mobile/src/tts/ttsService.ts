@@ -6,6 +6,7 @@ const STORAGE_KEY = '@eyetech/selected_voice';
 const lastSpokenAt: Record<string, number> = {};
 
 let activeVoiceId: string | undefined;
+let speaking = false;
 
 export async function loadSavedVoice(): Promise<string | undefined> {
   try {
@@ -35,6 +36,17 @@ export async function initTTS(): Promise<void> {
   await loadSavedVoice();
 }
 
+export function isSpeakingNow(): boolean {
+  return speaking;
+}
+
+const SPEECH_OPTIONS = () => ({
+  language: 'tr-TR',
+  rate: 0.9,
+  pitch: 1.0,
+  ...(activeVoiceId ? { voice: activeVoiceId } : {}),
+});
+
 export async function speak(text: string, objectClass?: string): Promise<void> {
   const key = objectClass ?? text;
   const now = Date.now();
@@ -42,14 +54,30 @@ export async function speak(text: string, objectClass?: string): Promise<void> {
   if (lastSpokenAt[key] && now - lastSpokenAt[key] < COOLDOWN_MS) return;
   lastSpokenAt[key] = now;
 
+  speaking = true;
   Speech.speak(text, {
-    language: 'tr-TR',
-    rate: 0.9,
-    pitch: 1.0,
-    ...(activeVoiceId ? { voice: activeVoiceId } : {}),
+    ...SPEECH_OPTIONS(),
+    onDone:    () => { speaking = false; },
+    onStopped: () => { speaking = false; },
+    onError:   () => { speaking = false; },
+  });
+}
+
+// Mevcut sesi keser ve cooldown'u yok sayarak anında konuşur
+export function speakUrgent(text: string, objectClass?: string): void {
+  const key = objectClass ?? text;
+  Speech.stop();
+  lastSpokenAt[key] = Date.now();
+  speaking = true;
+  Speech.speak(text, {
+    ...SPEECH_OPTIONS(),
+    onDone:    () => { speaking = false; },
+    onStopped: () => { speaking = false; },
+    onError:   () => { speaking = false; },
   });
 }
 
 export function stopSpeaking(): void {
   Speech.stop();
+  speaking = false;
 }
