@@ -14,12 +14,17 @@ const KNOWN_HEIGHTS_M: Record<string, number> = {
 const FOCAL_LENGTH_PX = 229;
 const INPUT_HEIGHT_PX = 320;
 
+// Bbox yüksekliği bu eşiği aştığında nesne çerçeveyi taşıyor olabilir;
+// pinhole modeli güvenilmez → -1 dönerek "Önünüzde bir X var" duyurusuna düşülür.
+const TOO_CLOSE_BBOX_THRESHOLD = 0.85;
+
 export function estimateDistanceMeters(
   label: string,
   bboxHeightNorm: number // normalize edilmiş yükseklik (0–1)
 ): number {
   const knownHeight = KNOWN_HEIGHTS_M[label];
   if (!knownHeight || bboxHeightNorm <= 0.02) return -1;
+  if (bboxHeightNorm >= TOO_CLOSE_BBOX_THRESHOLD) return -1;
 
   const bboxHeightPx = bboxHeightNorm * INPUT_HEIGHT_PX;
   const distance = (knownHeight * FOCAL_LENGTH_PX) / bboxHeightPx;
