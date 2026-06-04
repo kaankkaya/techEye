@@ -1,12 +1,12 @@
-# eyeTech — AGENTS.md
+# TechEye — AGENTS.md
 
-Bu dosya, eyeTech projesinde çalışan AI agent'ların çalışma prensiplerini, metodolojilerini ve kısıtlamalarını tanımlar.
+Bu dosya, TechEye projesinde çalışan AI agent'ların çalışma prensiplerini, metodolojilerini ve kısıtlamalarını tanımlar.
 
 ---
 
 ## Agent Tanımı
 
-eyeTech'te "agent" kavramı, belirli bir görevi otonom olarak yürüten, karar veren ve sonuç üreten bir yapıyı ifade eder. Bu projede agent'lar şu bağlamlarda kullanılır:
+TechEye'da "agent" kavramı, belirli bir görevi otonom olarak yürüten, karar veren ve sonuç üreten bir yapıyı ifade eder. Bu projede agent'lar şu bağlamlarda kullanılır:
 
 - Kamera frame'i yakalama ve API'ye gönderme döngüsü
 - API yanıtını işleyip TTS çıktısına dönüştürme

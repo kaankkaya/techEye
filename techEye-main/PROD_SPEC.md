@@ -1,4 +1,4 @@
-# eyeTech — PROD_SPEC.md
+# TechEye — PROD_SPEC.md
 
 Mobil uygulamanın tasarım sistemi, ekran yapısı, bileşen davranışları ve iş mantığı bu dosyada tanımlanır. React Native kodu yazılırken bu dosya birincil referanstır.
 
@@ -8,9 +8,9 @@ Mobil uygulamanın tasarım sistemi, ekran yapısı, bileşen davranışları ve
 
 | Alan | Değer |
 |---|---|
-| App Name | eyeTech |
-| Bundle ID (iOS) | com.kaankaya.eyetech |
-| Slug | eyetech |
+| App Name | TechEye |
+| Bundle ID (iOS) | com.anonymous.techeye |
+| Slug | techeye |
 | Versiyon | 1.0.0 |
 | Yönlendirme | Portrait only |
 | Dil | Türkçe |
@@ -116,7 +116,7 @@ App açılır → native splash kapanır
 |---|---|
 | İkon | `FontAwesome6 eye-low-vision`, `accent` rengi |
 | Başlık | `"Ses Seç"` — `Inter_700Bold` 28px |
-| Alt başlık | `"eyeTech'in kullanacağı Türkçe sesi seçin. / Sesleri dinlemek için ▶ tuşuna basın."` |
+| Alt başlık | `"TechEye'ın kullanacağı Türkçe sesi seçin. / Sesleri dinlemek için ▶ tuşuna basın."` |
 | Ayarlar linki | `"Diğer seslere göz at"` — altı çizili, `textSecondary`, tıklanınca iOS Erişilebilirlik ayarlarını açar (`App-prefs:root=ACCESSIBILITY`) |
 | Ses listesi | `FlatList` — Enhanced sesler üstte, her satırda isim + dil + Enhanced rozeti |
 | ▶ butonu | Her ses satırında; tıklanınca `PREVIEW_TEXT` ile önizleme yapar, yüklenirken `ActivityIndicator` gösterir |
@@ -128,7 +128,7 @@ App açılır → native splash kapanır
 
 **Boş durum:** Cihazda Türkçe ses yoksa `"Cihazda yüklü Türkçe ses bulunamadı…"` mesajı gösterilir.
 
-**Persistence:** `@react-native-async-storage/async-storage` — anahtar: `@eyetech/selected_voice`. Ses identifier'ı string olarak saklanır.
+**Persistence:** `@react-native-async-storage/async-storage` — anahtar: `@techeye/selected_voice`. Ses identifier'ı string olarak saklanır.
 
 **App akışı:**
 ```
@@ -150,7 +150,7 @@ App açılır → LoadingScreen → [kayıtlı ses yok] → VoicePickerScreen
 |---|---|
 | İkon | `FontAwesome6 camera`, 48px, `accent` rengi |
 | Başlık | `"Kamera Erişimi"` — `bold` 26px |
-| Açıklama | `"eyeTech çevrendeki nesneleri algılamak için kameraya ihtiyaç duyar."` — `regular` 18px, `textSecondary` |
+| Açıklama | `"TechEye çevrendeki nesneleri algılamak için kameraya ihtiyaç duyar."` — `regular` 18px, `textSecondary` |
 | Buton | `"İzin Ver"` — `accent` arka plan, `requestPermission()` çağırır |
 
 **Stil:** Tam ekran, dikey + yatay ortalanmış, `paddingHorizontal: 32`, elemanlar arası `gap: 16`.
@@ -251,7 +251,7 @@ idle
 - Ortalama adım uzunluğu: **75 cm** (`STEP_CM = 75`)
 - Dönüşüm: `adım = round((mesafe_m × 100) / 75)`
 - Mesafe bilinmiyorsa birim gösterilmez → `"Önünüzde bir kişi var"` / `"Yakınınızda bir kişi var"`
-- Seçilen birim `AsyncStorage`'a kaydedilir — anahtar: `@eyetech/distance_unit`
+- Seçilen birim `AsyncStorage`'a kaydedilir — anahtar: `@techeye/distance_unit`
 - `initUnit()` uygulama açılışında `App.tsx`'te çağrılır (`initTTS()` ile birlikte)
 
 **Tarama Ekranı Modu:**
@@ -261,7 +261,7 @@ idle
 | Gelişmiş | Alt HUD (animasyon + status text + buton) görünür | ✓ |
 | Basit | Alt HUD tamamen gizlenir; ekranın herhangi yerine basınca tarama başlar/durur (ayarlar ve DEV butonları hariç) | |
 
-- Persistence: `AsyncStorage` — anahtar: `@eyetech/display_mode`
+- Persistence: `AsyncStorage` — anahtar: `@techeye/display_mode`
 - `initDisplayMode()` uygulama açılışında `App.tsx`'te çağrılır
 - Ayarlar modal kapanınca `CameraScreen` modu yeniden yükler
 
@@ -464,7 +464,7 @@ Bbox yüksekliği birincil sinyal olarak kullanılır. `distanceMeters`, nesne f
 
 | Anahtar | Değer | Varsayılan |
 |---|---|---|
-| `@eyetech/haptic_enabled` | `"true"` / `"false"` | `"true"` (açık) |
+| `@techeye/haptic_enabled` | `"true"` / `"false"` | `"true"` (açık) |
 
 `initHaptics()` uygulama açılışında `App.tsx`'te çağrılır.
 
@@ -548,7 +548,7 @@ Lokal ML pipeline ile API anahtarı gerekmez. `.env` dosyası şu an boştur.
 ## Proje Dosya Yapısı
 
 ```
-eyetech/
+techeye/
 ├── CLAUDE.md
 ├── AGENTS.md
 ├── PROD_SPEC.md
