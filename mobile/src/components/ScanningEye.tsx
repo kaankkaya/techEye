@@ -1,9 +1,9 @@
 import { useRef, useEffect } from 'react';
-import { View, ViewStyle } from 'react-native';
+import { View, StyleProp, ViewStyle } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { useReduceMotion } from '../utils/useReduceMotion';
 
-type Props = { isScanning: boolean; size?: number; style?: ViewStyle };
+type Props = { isScanning: boolean; size?: number; style?: StyleProp<ViewStyle> };
 
 export default function ScanningEye({ isScanning, size = 56, style }: Props) {
   const lottieRef = useRef<LottieView>(null);

@@ -9,7 +9,7 @@ import HapticButton from './HapticButton';
 import AppText from './AppText';
 import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import { detectObjects } from '../detection/detectionService';
-import { initModels } from '../detection/mlPipeline';
+import { initModels, lastFrameUsedDepth } from '../detection/mlPipeline';
 import { speak, speakUrgent, isSpeakingNow, stopSpeaking } from '../tts/ttsService';
 import {
   buildAnnouncement,
@@ -45,6 +45,7 @@ export default function CameraScreen() {
   const [statusText, setStatusText] = useState('Başlamak için Tara\'ya basın');
   const [devMode, setDevMode] = useState(false);
   const [memStats, setMemStats] = useState<{ used: number; total: number } | null>(null);
+  const [depthActive, setDepthActive] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('gelismis');
   const [debugDetections, setDebugDetections] = useState<DetectedObject[]>([]);
@@ -92,6 +93,7 @@ export default function CameraScreen() {
 
       if (devModeRef.current) {
         setDebugDetections(detected);
+        setDepthActive(lastFrameUsedDepth);
       }
 
       evaluateProximityHaptics(detected);
@@ -144,6 +146,7 @@ export default function CameraScreen() {
     }
     setIsScanning(false);
     setDebugDetections([]);
+    setDepthActive(false);
     setStatusText('Tarama durduruldu');
     stopSpeaking();
     speak('Tarama durduruldu');
@@ -229,13 +232,14 @@ export default function CameraScreen() {
             return (
               <View
                 key={i}
-                style={[styles.bbox, {
+                style={{
+                  ...StyleSheet.flatten(styles.bbox),
                   left: left * screenWidth,
                   top: top * screenHeight,
                   width: width * screenWidth,
                   height: height * screenHeight,
                   borderColor: color,
-                }]}
+                }}
               >
                 <View style={[styles.bboxLabel, { backgroundColor: color }]}>
                   <AppText weight="bold" size={11} style={{ color: '#000000' }}>
@@ -300,6 +304,14 @@ export default function CameraScreen() {
         <View style={[styles.memChip, { backgroundColor: theme.overlay, borderColor: theme.border }]}>
           <AppText weight="bold" size={10} style={{ color: theme.accent }}>
             {`MEM  ${memStats.used}MB / ${memStats.total}MB`}
+          </AppText>
+        </View>
+      )}
+
+      {devMode && (
+        <View style={[styles.depthChip, { backgroundColor: theme.overlay, borderColor: depthActive ? theme.accent : theme.border }]}>
+          <AppText weight="bold" size={10} style={{ color: depthActive ? theme.accent : theme.textSecondary }}>
+            {depthActive ? 'DEPTH  ON' : 'DEPTH  OFF'}
           </AppText>
         </View>
       )}
@@ -374,11 +386,6 @@ const styles = StyleSheet.create({
   },
   permissionIcon: { marginBottom: 8 },
   permissionTitle: { textAlign: 'center' },
-  permissionText: {
-    textAlign: 'center',
-    lineHeight: 28,
-    marginBottom: 8,
-  },
   appIcon: { marginBottom: 16 },
   statusText: {
     textAlign: 'center',
@@ -429,6 +436,15 @@ const styles = StyleSheet.create({
   memChip: {
     position: 'absolute',
     top: 104,
+    right: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  depthChip: {
+    position: 'absolute',
+    top: 130,
     right: 20,
     paddingHorizontal: 8,
     paddingVertical: 4,
