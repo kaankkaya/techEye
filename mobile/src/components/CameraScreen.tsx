@@ -21,6 +21,7 @@ import {
 } from '../utils/announcementUtils';
 import { evaluateProximityHaptics } from '../utils/proximityHaptics';
 import { DisplayMode, loadDisplayMode, getDisplayMode } from '../utils/displayService';
+import { initDirection, isDirectionEnabled, getObjectDirection } from '../utils/directionService';
 import { useTheme } from '../theme/ThemeContext';
 import { FontAwesome6 } from '@expo/vector-icons';
 import SettingsScreen from './SettingsScreen';
@@ -104,7 +105,11 @@ export default function CameraScreen() {
 
       if (sorted.length > 0) {
         const top = sorted[0];
-        const message = buildAnnouncement(top);
+        const direction =
+          isDirectionEnabled() && top.boundingBox
+            ? getObjectDirection(top.boundingBox)
+            : undefined;
+        const message = buildAnnouncement(top, direction);
         console.log(`[eyeTech] Announcing: "${message}"`);
         setStatusText(message);
         if (isUrgentThreat(top) && isSpeakingNow()) {
@@ -175,7 +180,7 @@ export default function CameraScreen() {
   }, [devMode]);
 
   useEffect(() => {
-    loadDisplayMode().then(setDisplayMode);
+    Promise.all([loadDisplayMode().then(setDisplayMode), initDirection()]);
     return () => {
       scanningRef.current = false;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);

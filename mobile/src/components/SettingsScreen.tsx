@@ -33,6 +33,10 @@ import {
   loadHapticEnabled,
   saveHapticEnabled,
 } from '../utils/proximityHaptics';
+import {
+  loadDirectionEnabled,
+  saveDirectionEnabled,
+} from '../utils/directionService';
 
 const PREVIEW_TEXT = 'Selam, ben yeni asistanınız.';
 const UNIT_OPTIONS: DistanceUnit[] = ['metre', 'adim'];
@@ -63,16 +67,18 @@ export default function SettingsScreen({ onClose }: Props) {
   const [displayPickerVisible, setDisplayPickerVisible] = useState(false);
   const [ttsRate, setTtsRate]           = useState<TtsRate>(0.9);
   const [ratePickerVisible, setRatePickerVisible] = useState(false);
+  const [directionOn, setDirectionOn]   = useState(true);
 
   useEffect(() => {
     (async () => {
-      const [turkishVoices, savedId, savedUnit, savedHaptic, savedDisplay, savedRate] = await Promise.all([
+      const [turkishVoices, savedId, savedUnit, savedHaptic, savedDisplay, savedRate, savedDirection] = await Promise.all([
         getTurkishVoices(),
         loadSavedVoice(),
         loadSavedUnit(),
         loadHapticEnabled(),
         loadDisplayMode(),
         loadSavedRate(),
+        loadDirectionEnabled(),
       ]);
       const sorted = [...turkishVoices].sort((a, b) => {
         if (a.quality === b.quality) return a.name.localeCompare(b.name);
@@ -82,6 +88,7 @@ export default function SettingsScreen({ onClose }: Props) {
       setSelectedId(savedId ?? sorted[0]?.identifier);
       setUnit(savedUnit);
       setHapticOn(savedHaptic);
+      setDirectionOn(savedDirection);
       setDisplayMode(savedDisplay);
       const closest = TTS_RATE_OPTIONS.reduce((prev, cur) =>
         Math.abs(cur - savedRate) < Math.abs(prev - savedRate) ? cur : prev
@@ -111,6 +118,11 @@ export default function SettingsScreen({ onClose }: Props) {
   const toggleHaptic = useCallback(async (value: boolean) => {
     setHapticOn(value);
     await saveHapticEnabled(value);
+  }, []);
+
+  const toggleDirection = useCallback(async (value: boolean) => {
+    setDirectionOn(value);
+    await saveDirectionEnabled(value);
   }, []);
 
   const selectRate = useCallback(async (rate: TtsRate) => {
@@ -270,6 +282,39 @@ export default function SettingsScreen({ onClose }: Props) {
             thumbColor="#FFFFFF"
             accessibilityLabel="Titreşim uyarısını aç veya kapat"
             accessibilityHint="Yakın bir nesne algılandığında cihaz titreşir"
+            accessibilityRole="switch"
+          />
+        </View>
+
+        {/* Yön bölümü */}
+        <View style={[styles.sectionHeader, { borderBottomColor: theme.border, marginTop: 24 }]}>
+          <FontAwesome6 name="compass" size={14} color={theme.accent} />
+          <AppText weight="bold" size={13} style={{ color: theme.textSecondary, letterSpacing: 0.8 }}>
+            YÖN
+          </AppText>
+        </View>
+
+        <View style={[styles.settingRow, { borderBottomColor: theme.border }]}>
+          <View style={styles.settingRowLeft}>
+            <View style={[styles.settingIcon, { backgroundColor: theme.accentSoft }]}>
+              <FontAwesome6 name="left-right" size={14} color={theme.accent} />
+            </View>
+            <View>
+              <AppText weight="bold" size={17} style={{ color: theme.text }}>
+                Yön Bildirimi
+              </AppText>
+              <AppText size={13} style={{ color: theme.textSecondary, marginTop: 2 }}>
+                Sağınız, solunuz, önünüz
+              </AppText>
+            </View>
+          </View>
+          <Switch
+            value={directionOn}
+            onValueChange={toggleDirection}
+            trackColor={{ false: theme.border, true: theme.accent }}
+            thumbColor="#FFFFFF"
+            accessibilityLabel="Yön bildirimini aç veya kapat"
+            accessibilityHint="Nesnenin sağda, solda veya önde olduğunu sesli bildirir"
             accessibilityRole="switch"
           />
         </View>

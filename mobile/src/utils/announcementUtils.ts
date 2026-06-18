@@ -28,11 +28,14 @@ const LABELS: Record<string, string> = {
   cat:     'kedi',
 };
 
-export function buildAnnouncement(obj: DetectedObject): string {
+export function buildAnnouncement(obj: DetectedObject, direction?: string): string {
   const tr = LABELS[obj.label.toLowerCase()] ?? obj.label;
   const dist = formatDistance(obj.distanceMeters ?? -1);
 
-  return dist ? `${dist}, ${tr}` : tr;
+  if (dist && direction) return `${dist} ${direction}, ${tr}`;
+  if (dist) return `${dist}, ${tr}`;
+  if (direction) return `${direction}, ${tr}`;
+  return tr;
 }
 
 export function isCloseEnough(obj: DetectedObject): boolean {
