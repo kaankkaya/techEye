@@ -15,7 +15,7 @@ import AppText from './AppText';
 import * as Speech from 'expo-speech';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
-import { getTurkishVoices, saveVoice, loadSavedVoice } from '../tts/ttsService';
+import { getTurkishVoices, saveVoice, loadSavedVoice, saveRate, loadSavedRate } from '../tts/ttsService';
 import {
   DistanceUnit,
   UNIT_LABELS,
@@ -37,6 +37,16 @@ import {
 const PREVIEW_TEXT = 'Selam, ben yeni asistanınız.';
 const UNIT_OPTIONS: DistanceUnit[] = ['metre', 'adim'];
 
+type TtsRate = 0.6 | 0.8 | 0.9 | 1.1 | 1.3;
+const TTS_RATE_OPTIONS: TtsRate[] = [0.6, 0.8, 0.9, 1.1, 1.3];
+const TTS_RATE_LABELS: Record<TtsRate, string> = {
+  0.6: 'Çok Yavaş',
+  0.8: 'Yavaş',
+  0.9: 'Normal',
+  1.1: 'Hızlı',
+  1.3: 'Çok Hızlı',
+};
+
 
 type Props = { onClose: () => void };
 
@@ -51,15 +61,18 @@ export default function SettingsScreen({ onClose }: Props) {
   const [hapticOn, setHapticOn]         = useState(true);
   const [displayMode, setDisplayMode]   = useState<DisplayMode>('gelismis');
   const [displayPickerVisible, setDisplayPickerVisible] = useState(false);
+  const [ttsRate, setTtsRate]           = useState<TtsRate>(0.9);
+  const [ratePickerVisible, setRatePickerVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const [turkishVoices, savedId, savedUnit, savedHaptic, savedDisplay] = await Promise.all([
+      const [turkishVoices, savedId, savedUnit, savedHaptic, savedDisplay, savedRate] = await Promise.all([
         getTurkishVoices(),
         loadSavedVoice(),
         loadSavedUnit(),
         loadHapticEnabled(),
         loadDisplayMode(),
+        loadSavedRate(),
       ]);
       const sorted = [...turkishVoices].sort((a, b) => {
         if (a.quality === b.quality) return a.name.localeCompare(b.name);
@@ -70,6 +83,10 @@ export default function SettingsScreen({ onClose }: Props) {
       setUnit(savedUnit);
       setHapticOn(savedHaptic);
       setDisplayMode(savedDisplay);
+      const closest = TTS_RATE_OPTIONS.reduce((prev, cur) =>
+        Math.abs(cur - savedRate) < Math.abs(prev - savedRate) ? cur : prev
+      );
+      setTtsRate(closest);
       setLoading(false);
     })();
   }, []);
@@ -94,6 +111,12 @@ export default function SettingsScreen({ onClose }: Props) {
   const toggleHaptic = useCallback(async (value: boolean) => {
     setHapticOn(value);
     await saveHapticEnabled(value);
+  }, []);
+
+  const selectRate = useCallback(async (rate: TtsRate) => {
+    setTtsRate(rate);
+    setRatePickerVisible(false);
+    await saveRate(rate);
   }, []);
 
   const preview = useCallback((voice: Speech.Voice) => {
@@ -291,6 +314,31 @@ export default function SettingsScreen({ onClose }: Props) {
           </AppText>
         </View>
 
+        {/* TTS Hız satırı */}
+        <HapticButton
+          haptic="light"
+          style={[styles.settingRow, { borderBottomColor: theme.border }]}
+          onPress={() => setRatePickerVisible(true)}
+          accessibilityLabel={`Konuşma hızı: ${TTS_RATE_LABELS[ttsRate]}`}
+          accessibilityHint="Sesli anlatım hızını değiştirir"
+          accessibilityRole="button"
+        >
+          <View style={styles.settingRowLeft}>
+            <View style={[styles.settingIcon, { backgroundColor: theme.accentSoft }]}>
+              <FontAwesome6 name="gauge-high" size={14} color={theme.accent} />
+            </View>
+            <AppText weight="bold" size={17} style={{ color: theme.text }}>
+              Konuşma Hızı
+            </AppText>
+          </View>
+          <View style={styles.settingRowRight}>
+            <AppText size={17} style={{ color: theme.textSecondary }}>
+              {TTS_RATE_LABELS[ttsRate]}
+            </AppText>
+            <FontAwesome6 name="chevron-right" size={13} color={theme.textSecondary} />
+          </View>
+        </HapticButton>
+
         {loading ? (
           <ActivityIndicator size="large" color={theme.accent} style={styles.loader} />
         ) : voices.length === 0 ? (
@@ -392,6 +440,52 @@ export default function SettingsScreen({ onClose }: Props) {
                       {DISPLAY_MODE_LABELS[opt]}
                     </AppText>
                     {displayMode === opt && (
+                      <FontAwesome6 name="check" size={16} color={theme.accent} />
+                    )}
+                  </HapticButton>
+                ))}
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+      {/* TTS hız picker modal */}
+      <Modal
+        visible={ratePickerVisible}
+        transparent
+        animationType="fade"
+        accessibilityViewIsModal
+        onRequestClose={() => setRatePickerVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setRatePickerVisible(false)}>
+          <View style={styles.pickerOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={[styles.pickerCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <AppText weight="bold" size={15} style={[styles.pickerTitle, { color: theme.textSecondary }]}>
+                  Konuşma Hızı
+                </AppText>
+                {TTS_RATE_OPTIONS.map((opt, i) => (
+                  <HapticButton
+                    key={opt}
+                    style={[
+                      styles.pickerOption,
+                      { borderTopColor: theme.border },
+                      i === 0 && { borderTopWidth: StyleSheet.hairlineWidth },
+                    ]}
+                    onPress={() => selectRate(opt)}
+                    accessibilityLabel={TTS_RATE_LABELS[opt]}
+                    accessibilityHint="Sesli anlatım bu hızda yapılır"
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: ttsRate === opt }}
+                  >
+                    <AppText
+                      weight={ttsRate === opt ? 'bold' : 'regular'}
+                      size={18}
+                      style={{ color: ttsRate === opt ? theme.accent : theme.text }}
+                    >
+                      {TTS_RATE_LABELS[opt]}
+                    </AppText>
+                    {ttsRate === opt && (
                       <FontAwesome6 name="check" size={16} color={theme.accent} />
                     )}
                   </HapticButton>

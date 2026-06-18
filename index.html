@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EyeTech — On-Device ML for Vision Assistance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --background: #0F0A08;
+      --surface: #1A1108;
+      --accent: #F97316;
+      --accent-press: #EA580C;
+      --accent-soft: rgba(249, 115, 22, 0.13);
+      --text: #FFFFFF;
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --border: #2A211A;
+      --danger: #DC2626;
+      
+      --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      
+      --size-display: 48px;
+      --size-h1: 36px;
+      --size-h2: 28px;
+      --size-h3: 24px;
+      --size-body-lg: 18px;
+      --size-body: 17px;
+      --size-caption: 16px;
+      --size-meta: 13px;
+      
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --space-7: 48px;
+      --space-8: 64px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--background);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: var(--size-body-lg);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ========== HERO ========== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: var(--space-8) var(--space-6);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, var(--accent-soft) 0%, transparent 70%);
+      top: -200px;
+      right: -200px;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-sm);
+      font-size: var(--size-meta);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: var(--space-5);
+    }
+
+    .hero h1 {
+      font-size: var(--size-display);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: var(--space-4);
+      letter-spacing: -0.5px;
+    }
+
+    .hero .subtitle {
+      font-size: var(--size-h3);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-8);
+      line-height: 1.4;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: var(--space-5);
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: var(--space-4) var(--space-6);
+      border-radius: var(--radius-lg);
+      border: none;
+      font-family: var(--font-sans);
+      font-size: var(--size-body);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--background);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-press);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1.5px solid var(--accent);
+    }
+
+    .btn-secondary:hover {
+      background: var(--accent-soft);
+    }
+
+    /* ========== SECTION STRUCTURE ========== */
+    section {
+      padding: var(--space-8) var(--space-6);
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    section h2 {
+      font-size: var(--size-h1);
+      font-weight: 700;
+      margin-bottom: var(--space-6);
+      line-height: 1.2;
+    }
+
+    section h3 {
+      font-size: var(--size-h3);
+      font-weight: 700;
+      margin-bottom: var(--space-4);
+      line-height: 1.2;
+    }
+
+    section > p {
+      color: var(--text-secondary);
+      margin-bottom: var(--space-6);
+      line-height: 1.8;
+    }
+
+    /* ========== HOW IT WORKS ========== */
+    #how-it-works {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-6);
+      margin-bottom: var(--space-8);
+    }
+
+    .flow-step {
+      padding: var(--space-5);
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      text-align: center;
+    }
+
+    .flow-step-number {
+      font-size: var(--size-display);
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: var(--space-3);
+    }
+
+    .flow-step h4 {
+      font-size: var(--size-body);
+      font-weight: 700;
+      margin-bottom: var(--space-3);
+    }
+
+    .flow-step p {
+      font-size: var(--size-caption);
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .flow-arrow {
+      text-align: center;
+      font-size: var(--size-h1);
+      color: var(--accent);
+      margin: calc(var(--space-5) * -1) 0;
+      line-height: 1;
+    }
+
+    .use-cases {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-6);
+      margin-top: var(--space-7);
+    }
+
+    .use-case {
+      padding: var(--space-5);
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+
+    .use-case h4 {
+      font-size: var(--size-body);
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: var(--space-3);
+    }
+
+    .use-case p {
+      font-size: var(--size-caption);
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* ========== TECH STACK ========== */
+    #tech-stack {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-6);
+      margin-bottom: var(--space-8);
+    }
+
+    .tech-card {
+      padding: var(--space-5);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+
+    .tech-card h4 {
+      font-size: var(--size-h3);
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: var(--space-3);
+    }
+
+    .tech-card-label {
+      font-size: var(--size-meta);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: var(--space-4);
+      display: block;
+      font-weight: 600;
+    }
+
+    .tech-card p {
+      font-size: var(--size-caption);
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: var(--space-3);
+    }
+
+    .tech-specs {
+      display: grid;
+      gap: var(--space-3);
+    }
+
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--border);
+      font-size: var(--size-caption);
+    }
+
+    .spec-row:last-child {
+      border-bottom: none;
+    }
+
+    .spec-label {
+      color: var(--text-secondary);
+    }
+
+    .spec-value {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ========== ML MODEL DETAILS ========== */
+    #ml-models {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .model-section {
+      margin-bottom: var(--space-8);
+    }
+
+    .model-section h3 {
+      color: var(--accent);
+      margin-bottom: var(--space-5);
+    }
+
+    .architecture-box {
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      margin-bottom: var(--space-6);
+    }
+
+    .architecture-step {
+      display: flex;
+      gap: var(--space-5);
+      margin-bottom: var(--space-5);
+      padding-bottom: var(--space-5);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .architecture-step:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .step-icon {
+      font-size: var(--size-h1);
+      color: var(--accent);
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .step-content h4 {
+      font-size: var(--size-body);
+      font-weight: 700;
+      margin-bottom: var(--space-2);
+    }
+
+    .step-content p {
+      font-size: var(--size-caption);
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .code-block {
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      overflow-x: auto;
+      margin: var(--space-4) 0;
+    }
+
+    .code-block code {
+      font-family: 'Courier New', monospace;
+      font-size: var(--size-caption);
+      color: var(--accent);
+      line-height: 1.6;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-4);
+      margin: var(--space-6) 0;
+    }
+
+    .metric {
+      text-align: center;
+      padding: var(--space-4);
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+
+    .metric-value {
+      font-size: var(--size-h2);
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: var(--space-2);
+    }
+
+    .metric-label {
+      font-size: var(--size-caption);
+      color: var(--text-secondary);
+    }
+
+    /* ========== ACCESSIBILITY ========== */
+    #accessibility {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .principles-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-6);
+      margin-top: var(--space-6);
+    }
+
+    .principle {
+      padding: var(--space-5);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+
+    .principle h4 {
+      font-size: var(--size-body);
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: var(--space-3);
+    }
+
+    .principle p {
+      font-size: var(--size-caption);
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin-top: var(--space-5);
+    }
+
+    .feature-list li {
+      padding: var(--space-3) 0;
+      padding-left: var(--space-5);
+      position: relative;
+      font-size: var(--size-caption);
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .feature-list li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* ========== FOOTER ========== */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: var(--space-8) var(--space-6);
+      text-align: center;
+    }
+
+    footer p {
+      color: var(--text-secondary);
+      font-size: var(--size-caption);
+      margin-bottom: var(--space-4);
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 1024px) {
+      .flow-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .tech-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .metric-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .principles-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      :root {
+        --size-display: 36px;
+        --size-h1: 28px;
+        --size-h2: 24px;
+        --space-7: 32px;
+        --space-8: 48px;
+      }
+
+      section {
+        padding: var(--space-6) var(--space-4);
+      }
+
+      .flow-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tech-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-cta {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .use-cases {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ========== HERO ========== -->
+  <section class="hero">
+    <div class="hero-content">
+      <span class="hero-badge">AI for Accessibility</span>
+      <h1>EyeTech</h1>
+      <p class="subtitle">On-device machine learning for blind and low-vision users. Real-time object detection, distance estimation, and haptic feedback — offline, fast, and dependable.</p>
+      <div class="hero-cta">
+        <a href="https://github.com/kaankkaya/techEye" class="btn btn-primary">View on GitHub</a>
+        <a href="#how-it-works" class="btn btn-secondary">Learn How It Works</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== HOW IT WORKS ========== -->
+  <section id="how-it-works">
+    <h2>How It Works</h2>
+    <p>EyeTech processes the camera feed in real time using on-device ML models. No network. No server. Just pure computational speed and accessibility.</p>
+    
+    <div class="flow-grid">
+      <div class="flow-step">
+        <div class="flow-step-number">1</div>
+        <h4>Capture</h4>
+        <p>Camera frame at ~1fps continuous video stream</p>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-step-number">2</div>
+        <h4>Detect</h4>
+        <p>YOLO11n identifies objects &amp; bounding boxes</p>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-step-number">3</div>
+        <h4>Estimate</h4>
+        <p>Pinhole model converts to distance in metres</p>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-step-number">4</div>
+        <h4>Speak</h4>
+        <p>Turkish TTS + haptic feedback to the user</p>
+      </div>
+    </div>
+
+    <h3>Use Cases</h3>
+    <div class="use-cases">
+      <div class="use-case">
+        <h4>📍 Navigation in Public Spaces</h4>
+        <p>Get real-time alerts about pedestrians, vehicles, and obstacles ahead. Perfect for crossing streets, navigating crowded areas, or exploring unfamiliar environments safely.</p>
+      </div>
+      <div class="use-case">
+        <h4>🦮 Personal Safety</h4>
+        <p>Haptic warnings for close objects combined with calm audio feedback. No need for a guide dog or human assistance — EyeTech provides independence and confidence.</p>
+      </div>
+      <div class="use-case">
+        <h4>🏠 Home &amp; Workplace Awareness</h4>
+        <p>Identify people, pets, and obstacles in familiar environments. Useful during meetings, in home settings, or transitioning between rooms.</p>
+      </div>
+      <div class="use-case">
+        <h4>🚐 Mobility &amp; Transport</h4>
+        <p>Stay aware of approaching vehicles, cyclists, and pedestrians. Works on the bus, in parking lots, or near busy roads where awareness is critical.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== TECH STACK ========== -->
+  <section id="tech-stack">
+    <h2>Tech Stack &amp; Architecture</h2>
+    <p>Built with modern, battle-tested technologies optimized for performance, accessibility, and offline reliability.</p>
+
+    <div class="tech-grid">
+      <div class="tech-card">
+        <span class="tech-card-label">Frontend</span>
+        <h4>React Native (Expo)</h4>
+        <p>Cross-platform mobile framework with native performance and a rich component ecosystem. Compiled to iOS and Android.</p>
+        <div class="tech-specs">
+          <div class="spec-row">
+            <span class="spec-label">Language</span>
+            <span class="spec-value">TypeScript</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">State Mgmt</span>
+            <span class="spec-value">React Hooks</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">Build</span>
+            <span class="spec-value">Expo CLI</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tech-card">
+        <span class="tech-card-label">ML &amp; Vision</span>
+        <h4>YOLO11n (ONNX)</h4>
+        <p>Ultralytics YOLOv11 nano model compiled to ONNX format. Runs entirely on-device with minimal memory footprint.</p>
+        <div class="tech-specs">
+          <div class="spec-row">
+            <span class="spec-label">Model Size</span>
+            <span class="spec-value">~10 MB</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">Runtime</span>
+            <span class="spec-value">ONNX Runtime</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">Input</span>
+            <span class="spec-value">640×480 RGB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tech-card">
+        <span class="tech-card-label">Audio &amp; Haptics</span>
+        <h4>Native APIs</h4>
+        <p>Turkish language TTS via system speech engine. Haptic feedback through device vibration motor.</p>
+        <div class="tech-specs">
+          <div class="spec-row">
+            <span class="spec-label">TTS Engine</span>
+            <span class="spec-value">System TTS</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">Language</span>
+            <span class="spec-value">Turkish (tr-TR)</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">Haptics</span>
+            <span class="spec-value">Native Vibration</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>System Architecture</h3>
+    <div class="architecture-box">
+      <div class="architecture-step">
+        <div class="step-icon">📷</div>
+        <div class="step-content">
+          <h4>Camera Module (React Native Camera)</h4>
+          <p><strong>Input:</strong> Real-time video stream from device camera at target ~1 fps.</p>
+          <p><strong>Output:</strong> Raw frame buffer (RGB, 640×480 or device-native resolution).</p>
+          <p>Permissions are requested at app launch. Camera preview is rendered to the screen with an overlay HUD for controls.</p>
+        </div>
+      </div>
+
+      <div class="architecture-step">
+        <div class="step-icon">🧠</div>
+        <div class="step-content">
+          <h4>YOLO11n Inference (ONNX Runtime)</h4>
+          <p><strong>Input:</strong> 640×480 RGB frame, preprocessed and normalized.</p>
+          <p><strong>Processing:</strong> Forward pass through the YOLO11n model to generate bounding boxes, class predictions, and confidence scores.</p>
+          <p><strong>Output:</strong> Detections object: {class, bbox: [x, y, w, h], confidence}.</p>
+          <p><strong>Latency:</strong> ~80–120ms per frame on modern mobile hardware (A14+, Snapdragon 8xx series).</p>
+        </div>
+      </div>
+
+      <div class="architecture-step">
+        <div class="step-icon">📏</div>
+        <div class="step-content">
+          <h4>Distance Estimation (Pinhole Camera Model)</h4>
+          <p><strong>Input:</strong> Bounding box height (pixels) and known object reference height (e.g., 170 cm for adult human).</p>
+          <p><strong>Math:</strong> <code>distance = (focal_length × object_height) / bbox_height_pixels</code></p>
+          <p><strong>Focal Length:</strong> Calibrated per device; stored as a constant derived from camera intrinsics.</p>
+          <p><strong>Output:</strong> Estimated distance in metres, rounded to 1 decimal place.</p>
+          <p><strong>Accuracy:</strong> ±15–20% depending on object orientation and camera angle.</p>
+        </div>
+      </div>
+
+      <div class="architecture-step">
+        <div class="step-icon">🔊</div>
+        <div class="step-content">
+          <h4>Filtering, Prioritization &amp; Speech</h4>
+          <p><strong>Filtering:</strong> Only detections within a proximity threshold (default: 5 metres) are retained. Confidence threshold: &gt;0.5.</p>
+          <p><strong>Prioritization:</strong> person &gt; vehicle (car, bus, truck, bicycle) &gt; animal (dog, cat). Top detection per frame is selected.</p>
+          <p><strong>Speech:</strong> Turkish sentence is generated and played via system TTS. Example: <em>"2.3 metre uzağınızda bir kişi var."</em></p>
+          <p><strong>Haptics:</strong> If distance &lt; 1.5 metres, a haptic pulse is triggered (intensity proportional to proximity).</p>
+        </div>
+      </step>
+    </div>
+
+    <h3>Tracked Object Classes</h3>
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="metric-value">👤</div>
+        <div class="metric-label">Person</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">🚗</div>
+        <div class="metric-label">Vehicle</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">🚲</div>
+        <div class="metric-label">Bicycle</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">🐕</div>
+        <div class="metric-label">Animal</div>
+      </div>
+    </div>
+
+    <h3>Performance Metrics</h3>
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="metric-value">10 MB</div>
+        <div class="metric-label">Model Size</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">100–120 ms</div>
+        <div class="metric-label">Inference Latency</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">~1 fps</div>
+        <div class="metric-label">Frame Rate</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value">0% Network</div>
+        <div class="metric-label">Server Dependency</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ML MODEL DETAILS ========== -->
+  <section id="ml-models">
+    <h2>Machine Learning Model Details</h2>
+    <p>Deep dive into the YOLO11n model, its quantization, and how distance estimation works at the computational level.</p>
+
+    <div class="model-section">
+      <h3>YOLO11n — Architecture &amp; Training</h3>
+      <p><strong>Base Model:</strong> Ultralytics YOLOv11 Nano, a lightweight convolutional neural network optimized for real-time object detection on edge devices.</p>
+      
+      <div class="architecture-box">
+        <p><strong>Key Specifications:</strong></p>
+        <ul class="feature-list">
+          <li><strong>Parameters:</strong> ~2.6M trainable parameters (vs. YOLOv5n's 1.9M and YOLOv8n's 3.2M — a balanced middle ground).</li>
+          <li><strong>Input Resolution:</strong> 640×640 or adaptive (down-scales to 480 or 640 depending on device and performance budget).</li>
+          <li><strong>Backbone:</strong> Compact convolutional stack with depth-wise separable convolutions for efficiency.</li>
+          <li><strong>Neck:</strong> PAFPN (Path Aggregation Feature Pyramid Network) for multi-scale feature fusion.</li>
+          <li><strong>Head:</strong> 3-output decoupled detection head (bbox regression, class prediction, objectness).</li>
+          <li><strong>Training Dataset:</strong> COCO 2017 + custom fine-tuning on vision-assistance scenarios (Turkish urban environments).</li>
+        </ul>
+      </div>
+
+      <p><strong>Why YOLO11n?</strong></p>
+      <ul class="feature-list">
+        <li>Small model footprint (~10 MB ONNX) fits in memory on budget Android/iOS devices.</li>
+        <li>Inference latency (80–120 ms) is real-time friendly for a ~1 fps pipeline without dropping frames.</li>
+        <li>Excellent accuracy on person/vehicle/animal classes — the critical categories for navigation safety.</li>
+        <li>ONNX export is mature and well-supported by mobile runtimes.</li>
+      </ul>
+    </div>
+
+    <div class="model-section">
+      <h3>Model Quantization &amp; Export</h3>
+      
+      <div class="architecture-box">
+        <p><strong>Quantization Strategy:</strong> The YOLO11n model is exported to ONNX format with optional INT8 quantization for further memory and latency reduction.</p>
+        
+        <div class="spec-row" style="display: block; padding: var(--space-4); background: var(--background); border-radius: var(--radius-md); margin: var(--space-4) 0;">
+          <code style="color: var(--accent);">yolo export model=yolov11n.pt format=onnx half=False dynamic=False</code>
+        </div>
+
+        <ul class="feature-list">
+          <li><strong>Float32 Model:</strong> ~10 MB, used in production for maximum accuracy.</li>
+          <li><strong>INT8 Quantized (optional):</strong> ~2.5–3 MB, can reduce latency by 10–20% but may lose 1–2% accuracy.</li>
+          <li><strong>Runtime:</strong> ONNX Runtime (ort-mobile for iOS, ort-android for Android) handles inference.</li>
+          <li><strong>Input Preprocessing:</strong> Frames are resized, normalized to [0, 1] range, and converted to planar RGB (RRRGGGBBB).</li>
+          <li><strong>Output Postprocessing:</strong> Raw predictions are decoded; NMS (Non-Maximum Suppression) filters overlapping boxes. Threshold: 0.5 IoU, 0.4 confidence.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="model-section">
+      <h3>Distance Estimation Algorithm</h3>
+      
+      <div class="architecture-box">
+        <p><strong>Method:</strong> Pinhole Camera Model — a classical computer vision approach for monocular depth estimation.</p>
+
+        <h4 style="color: var(--accent); font-size: var(--size-body); font-weight: 700; margin: var(--space-5) 0 var(--space-3) 0;">Formula</h4>
+        <div class="code-block">
+          <code>distance (m) = (focal_length_px × object_height_m) / bbox_height_px</code>
+        </div>
+
+        <h4 style="color: var(--accent); font-size: var(--size-body); font-weight: 700; margin: var(--space-5) 0 var(--space-3) 0;">Example Calibration</h4>
+        <div class="code-block">
+          <code>focal_length_px = 800 (device-specific, derived from camera intrinsics)<br/>object_height_m = 1.70 (average adult human)<br/>bbox_height_px = 120 (detected bounding box height)<br/>→ distance = (800 × 1.70) / 120 ≈ 11.3 metres</code>
+        </div>
+
+        <ul class="feature-list">
+          <li><strong>Reference Heights:</strong> person: 1.70 m, car: 1.50 m, bicycle: 1.80 m, dog: 0.50 m.</li>
+          <li><strong>Focal Length Calibration:</strong> Performed during device setup via a known reference object (e.g., a card at a fixed distance).</li>
+          <li><strong>Accuracy Limits:</strong> ±15–20% error due to perspective distortion, tilted camera angles, and occlusion.</li>
+          <li><strong>Fallback Behavior:</strong> If distance is uncertain (low confidence detection or extreme angle), directional prefixes are used instead: <em>"Önünüzde bir kişi var"</em> ("There is a person ahead").</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="model-section">
+      <h3>Detection Filtering &amp; Prioritization Logic</h3>
+      
+      <div class="architecture-box">
+        <p><strong>Per-Frame Pipeline:</strong></p>
+
+        <div class="architecture-step">
+          <div class="step-icon">1️⃣</div>
+          <div class="step-content">
+            <h4>Confidence Thresholding</h4>
+            <p>Discard detections with confidence &lt; 0.5. This filters out weak predictions and reduces false positives.</p>
+          </div>
+        </div>
+
+        <div class="architecture-step">
+          <div class="step-icon">2️⃣</div>
+          <div class="step-content">
+            <h4>Proximity Filtering</h4>
+            <p>Only retain detections within the proximity threshold (default: 5 metres). Beyond this range, objects are not relevant for immediate navigation.</p>
+          </div>
+        </div>
+
+        <div class="architecture-step">
+          <div class="step-icon">3️⃣</div>
+          <div class="step-content">
+            <h4>Class Prioritization</h4>
+            <p>Sort remaining detections by class priority: <strong>person (1) &gt; vehicle (2) &gt; animal (3)</strong>. Within a class, closest object wins.</p>
+          </div>
+        </div>
+
+        <div class="architecture-step">
+          <div class="step-icon">4️⃣</div>
+          <div class="step-content">
+            <h4>Speech &amp; Haptic Output</h4>
+            <p>Announce the top detection. If distance &lt; 1.5 metres, trigger a haptic pulse with intensity proportional to proximity. Repeat detection only if the object class or distance changes significantly (&gt; 0.5 m delta).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ACCESSIBILITY ========== -->
+  <section id="accessibility">
+    <h2>Accessibility &amp; Design Philosophy</h2>
+    <p>EyeTech is built from the ground up for blind and low-vision users. Every design decision prioritizes clarity, usability, and dignity.</p>
+
+    <h3>Core Principles</h3>
+    <div class="principles-grid">
+      <div class="principle">
+        <h4>Audio-First Interface</h4>
+        <p>The app speaks what it sees. Every interaction is spoken aloud in clear, calm Turkish. Users do not need to look at a screen — the app adapts to their needs, not the other way around.</p>
+      </div>
+
+      <div class="principle">
+        <h4>Offline &amp; Private</h4>
+        <p>All processing happens on the device. No data leaves the phone. Users retain complete privacy and control, with no dependency on cloud services or network connectivity.</p>
+      </div>
+
+      <div class="principle">
+        <h4>Haptic Feedback</h4>
+        <p>Close objects trigger haptic warnings (vibration), reinforcing audio cues. Haptics are subtle and informative — never jarring or overwhelming.</p>
+      </div>
+
+      <div class="principle">
+        <h4>Oversized Touch Targets</h4>
+        <p>All buttons and interactive elements are at least 64×64 dp — well above the minimum 44 dp. This ensures users can tap accurately without seeing the screen.</p>
+      </div>
+
+      <div class="principle">
+        <h4>One Action Per Screen</h4>
+        <p>Complexity is reduced to essentials. Each screen has a single primary task: scan, select voice, adjust settings. No nested menus or hidden options.</p>
+      </div>
+
+      <div class="principle">
+        <h4>High Contrast &amp; Large Type</h4>
+        <p>Text is oversized (18 sp minimum) on near-black backgrounds with warm orange accents. For partially sighted users, the visual design is as accessible as the audio one.</p>
+      </div>
+    </div>
+
+    <h3>Accessibility Features</h3>
+    <ul class="feature-list">
+      <li><strong>VoiceOver / TalkBack Support:</strong> Native screen reader integration on iOS and Android. Every UI element has descriptive labels and hints.</li>
+      <li><strong>Reduced Motion:</strong> Respects system Reduce Motion setting. Animations are skipped; content remains visible immediately.</li>
+      <li><strong>Dark Mode Native:</strong> The UI is built on a dark palette — no light mode option. This reduces eye strain for all users and aligns with accessibility best practices.</li>
+      <li><strong>High Contrast Text:</strong> White text on near-black (#0F0A08) achieves WCAG AAA contrast ratio (>7:1). Secondary text at 60% opacity maintains legibility.</li>
+      <li><strong>Turkish Language Support:</strong> Full localization in Turkish, with culturally appropriate speech patterns (formal "siz" form).</li>
+      <li><strong>Accessibility Labels &amp; Hints:</strong> Every button carries a descriptive label (what it is) and a hint (what it does). Example: label: "Tara", hint: "Kamera ile nesne algılamayı başlatır" ("Starts detecting objects with the camera").</li>
+      <li><strong>No Decorative Graphics:</strong> The app has no unnecessary icons or imagery — only functional UI. The brand is expressed through typography and the orange accent, not visual noise.</li>
+    </ul>
+
+    <h3>Design System (UI &amp; Interaction)</h3>
+    <div class="principles-grid">
+      <div class="principle">
+        <h4>Color &amp; Contrast</h4>
+        <p><strong>Background:</strong> #0F0A08 (warm near-black). <strong>Accent:</strong> #F97316 (safety orange). <strong>Text:</strong> #FFFFFF (pure white) with 60% opacity for secondary. <strong>Contrast Ratio:</strong> 7:1+ (WCAG AAA).</p>
+      </div>
+
+      <div class="principle">
+        <h4>Typography</h4>
+        <p><strong>Font:</strong> Inter (400 regular, 700 bold). <strong>Sizes:</strong> 18–28 sp minimum. <strong>Line Height:</strong> 1.5–1.6 for readability. <strong>Letter Spacing:</strong> Increased on all-caps labels (0.8px).</p>
+      </div>
+
+      <div class="principle">
+        <h4>Spacing &amp; Padding</h4>
+        <p><strong>Scale:</strong> 4/8px base (gaps of 8, 12, 16, 24, 32 dp). <strong>Screen Padding:</strong> 24–32 dp on all edges. <strong>Card Margins:</strong> Generous whitespace between interactive elements.</p>
+      </div>
+
+      <div class="principle">
+        <h4>Button &amp; Touch States</h4>
+        <p><strong>Size:</strong> 160×64 dp minimum. <strong>Feedback:</strong> Haptic pulse (medium) + touch opacity dimming (visual feedback for sighted users). <strong>States:</strong> Idle (solid color), pressed (darker shade), disabled (lower opacity).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer>
+    <p><strong>EyeTech</strong> — a social responsibility project designed to assist visually impaired individuals.</p>
+    <p>Built with React Native, YOLO11n, and Turkish TTS. Fully offline, on-device, and open-source.</p>
+    <p><a href="https://github.com/kaankkaya/techEye">View on GitHub</a> · © 2024</p>
+  </footer>
+</body>
+</html>

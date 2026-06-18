@@ -3,10 +3,27 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const COOLDOWN_MS = 4000;
 const STORAGE_KEY = '@eyetech/selected_voice';
+const RATE_KEY = '@eyetech/tts_rate';
 const lastSpokenAt: Record<string, number> = {};
 
 let activeVoiceId: string | undefined;
+let activeRate = 0.9;
 let speaking = false;
+
+export async function loadSavedRate(): Promise<number> {
+  try {
+    const saved = await AsyncStorage.getItem(RATE_KEY);
+    if (saved !== null) activeRate = parseFloat(saved);
+  } catch {}
+  return activeRate;
+}
+
+export async function saveRate(rate: number): Promise<void> {
+  activeRate = rate;
+  try {
+    await AsyncStorage.setItem(RATE_KEY, String(rate));
+  } catch {}
+}
 
 export async function loadSavedVoice(): Promise<string | undefined> {
   try {
@@ -33,7 +50,7 @@ export async function getTurkishVoices(): Promise<Speech.Voice[]> {
 }
 
 export async function initTTS(): Promise<void> {
-  await loadSavedVoice();
+  await Promise.all([loadSavedVoice(), loadSavedRate()]);
 }
 
 export function isSpeakingNow(): boolean {
@@ -42,7 +59,7 @@ export function isSpeakingNow(): boolean {
 
 const SPEECH_OPTIONS = () => ({
   language: 'tr-TR',
-  rate: 0.9,
+  rate: activeRate,
   pitch: 1.0,
   ...(activeVoiceId ? { voice: activeVoiceId } : {}),
 });
