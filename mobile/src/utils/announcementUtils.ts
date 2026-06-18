@@ -18,27 +18,21 @@ const PRIORITY_ORDER = ['person', 'car', 'dog', 'bicycle', 'truck', 'bus', 'cat'
 const SUPPRESSOR_LABELS = new Set(['person', 'car', 'truck', 'bus']);
 const PROXIMITY_THRESHOLD = 0.15;
 
-const LABELS: Record<string, { tr: string; noDistPrefix: string }> = {
-  person:  { tr: 'kişi',     noDistPrefix: 'Önünüzde' },
-  car:     { tr: 'araba',    noDistPrefix: 'Yakınınızda' },
-  dog:     { tr: 'köpek',    noDistPrefix: 'Yakınınızda' },
-  bicycle: { tr: 'bisiklet', noDistPrefix: 'Yakınınızda' },
-  truck:   { tr: 'kamyon',   noDistPrefix: 'Yakınınızda' },
-  bus:     { tr: 'otobüs',   noDistPrefix: 'Yakınınızda' },
-  cat:     { tr: 'kedi',     noDistPrefix: 'Yakınınızda' },
+const LABELS: Record<string, string> = {
+  person:  'kişi',
+  car:     'araba',
+  dog:     'köpek',
+  bicycle: 'bisiklet',
+  truck:   'kamyon',
+  bus:     'otobüs',
+  cat:     'kedi',
 };
 
 export function buildAnnouncement(obj: DetectedObject): string {
-  const entry = LABELS[obj.label.toLowerCase()];
-  const tr = entry?.tr ?? obj.label;
+  const tr = LABELS[obj.label.toLowerCase()] ?? obj.label;
   const dist = formatDistance(obj.distanceMeters ?? -1);
 
-  if (dist) {
-    return `${dist} uzağınızda bir ${tr} var`;
-  }
-
-  const prefix = entry?.noDistPrefix ?? 'Yakınınızda';
-  return `${prefix} bir ${tr} var`;
+  return dist ? `${dist}, ${tr}` : tr;
 }
 
 export function isCloseEnough(obj: DetectedObject): boolean {
