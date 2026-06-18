@@ -37,6 +37,13 @@ import {
   loadDirectionEnabled,
   saveDirectionEnabled,
 } from '../utils/directionService';
+import {
+  ScanFrequency,
+  SCAN_FREQ_OPTIONS,
+  SCAN_FREQ_LABELS,
+  loadScanFrequency,
+  saveScanFrequency,
+} from '../utils/scanFrequencyService';
 
 const PREVIEW_TEXT = 'Selam, ben yeni asistanınız.';
 const UNIT_OPTIONS: DistanceUnit[] = ['metre', 'adim'];
@@ -68,10 +75,12 @@ export default function SettingsScreen({ onClose }: Props) {
   const [ttsRate, setTtsRate]           = useState<TtsRate>(0.9);
   const [ratePickerVisible, setRatePickerVisible] = useState(false);
   const [directionOn, setDirectionOn]   = useState(true);
+  const [scanFreq, setScanFreq]         = useState<ScanFrequency>(2);
+  const [freqPickerVisible, setFreqPickerVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const [turkishVoices, savedId, savedUnit, savedHaptic, savedDisplay, savedRate, savedDirection] = await Promise.all([
+      const [turkishVoices, savedId, savedUnit, savedHaptic, savedDisplay, savedRate, savedDirection, savedFreq] = await Promise.all([
         getTurkishVoices(),
         loadSavedVoice(),
         loadSavedUnit(),
@@ -79,6 +88,7 @@ export default function SettingsScreen({ onClose }: Props) {
         loadDisplayMode(),
         loadSavedRate(),
         loadDirectionEnabled(),
+        loadScanFrequency(),
       ]);
       const sorted = [...turkishVoices].sort((a, b) => {
         if (a.quality === b.quality) return a.name.localeCompare(b.name);
@@ -89,6 +99,7 @@ export default function SettingsScreen({ onClose }: Props) {
       setUnit(savedUnit);
       setHapticOn(savedHaptic);
       setDirectionOn(savedDirection);
+      setScanFreq(savedFreq);
       setDisplayMode(savedDisplay);
       const closest = TTS_RATE_OPTIONS.reduce((prev, cur) =>
         Math.abs(cur - savedRate) < Math.abs(prev - savedRate) ? cur : prev
@@ -129,6 +140,12 @@ export default function SettingsScreen({ onClose }: Props) {
     setTtsRate(rate);
     setRatePickerVisible(false);
     await saveRate(rate);
+  }, []);
+
+  const selectScanFreq = useCallback(async (freq: ScanFrequency) => {
+    setScanFreq(freq);
+    setFreqPickerVisible(false);
+    await saveScanFrequency(freq);
   }, []);
 
   const preview = useCallback((voice: Speech.Voice) => {
@@ -255,6 +272,31 @@ export default function SettingsScreen({ onClose }: Props) {
           <View style={styles.settingRowRight}>
             <AppText size={17} style={{ color: theme.textSecondary }}>
               {UNIT_LABELS[unit]}
+            </AppText>
+            <FontAwesome6 name="chevron-right" size={13} color={theme.textSecondary} />
+          </View>
+        </HapticButton>
+
+        {/* Tarama sıklığı satırı */}
+        <HapticButton
+          haptic="light"
+          style={[styles.settingRow, { borderBottomColor: theme.border }]}
+          onPress={() => setFreqPickerVisible(true)}
+          accessibilityLabel={`Tarama sıklığı: ${SCAN_FREQ_LABELS[scanFreq]}`}
+          accessibilityHint="Saniyedeki detection sayısını değiştirir"
+          accessibilityRole="button"
+        >
+          <View style={styles.settingRowLeft}>
+            <View style={[styles.settingIcon, { backgroundColor: theme.accentSoft }]}>
+              <FontAwesome6 name="rotate" size={14} color={theme.accent} />
+            </View>
+            <AppText weight="bold" size={17} style={{ color: theme.text }}>
+              Tarama Sıklığı
+            </AppText>
+          </View>
+          <View style={styles.settingRowRight}>
+            <AppText size={17} style={{ color: theme.textSecondary }}>
+              {SCAN_FREQ_LABELS[scanFreq]}
             </AppText>
             <FontAwesome6 name="chevron-right" size={13} color={theme.textSecondary} />
           </View>
@@ -485,6 +527,52 @@ export default function SettingsScreen({ onClose }: Props) {
                       {DISPLAY_MODE_LABELS[opt]}
                     </AppText>
                     {displayMode === opt && (
+                      <FontAwesome6 name="check" size={16} color={theme.accent} />
+                    )}
+                  </HapticButton>
+                ))}
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+      {/* Tarama sıklığı picker modal */}
+      <Modal
+        visible={freqPickerVisible}
+        transparent
+        animationType="fade"
+        accessibilityViewIsModal
+        onRequestClose={() => setFreqPickerVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setFreqPickerVisible(false)}>
+          <View style={styles.pickerOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={[styles.pickerCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <AppText weight="bold" size={15} style={[styles.pickerTitle, { color: theme.textSecondary }]}>
+                  Tarama Sıklığı
+                </AppText>
+                {SCAN_FREQ_OPTIONS.map((opt, i) => (
+                  <HapticButton
+                    key={opt}
+                    style={[
+                      styles.pickerOption,
+                      { borderTopColor: theme.border },
+                      i === 0 && { borderTopWidth: StyleSheet.hairlineWidth },
+                    ]}
+                    onPress={() => selectScanFreq(opt)}
+                    accessibilityLabel={SCAN_FREQ_LABELS[opt]}
+                    accessibilityHint="Nesne algılama bu sıklıkta çalışır"
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: scanFreq === opt }}
+                  >
+                    <AppText
+                      weight={scanFreq === opt ? 'bold' : 'regular'}
+                      size={18}
+                      style={{ color: scanFreq === opt ? theme.accent : theme.text }}
+                    >
+                      {SCAN_FREQ_LABELS[opt]}
+                    </AppText>
+                    {scanFreq === opt && (
                       <FontAwesome6 name="check" size={16} color={theme.accent} />
                     )}
                   </HapticButton>

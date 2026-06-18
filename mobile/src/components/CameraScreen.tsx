@@ -22,12 +22,12 @@ import {
 import { evaluateProximityHaptics } from '../utils/proximityHaptics';
 import { DisplayMode, loadDisplayMode, getDisplayMode } from '../utils/displayService';
 import { initDirection, isDirectionEnabled, getObjectDirection } from '../utils/directionService';
+import { initScanFrequency, getScanIntervalMs } from '../utils/scanFrequencyService';
 import { useTheme } from '../theme/ThemeContext';
 import { FontAwesome6 } from '@expo/vector-icons';
 import SettingsScreen from './SettingsScreen';
 import ScanningEye from './ScanningEye';
 
-const DETECTION_INTERVAL_MS = 500;
 
 const BBOX_COLORS: Record<string, string> = {
   person: '#00FF88',
@@ -59,7 +59,7 @@ export default function CameraScreen() {
 
   const scheduleNext = useCallback(() => {
     if (!scanningRef.current) return;
-    timeoutRef.current = setTimeout(runDetectionLoop, DETECTION_INTERVAL_MS);
+    timeoutRef.current = setTimeout(runDetectionLoop, getScanIntervalMs());
   }, []);
 
   const runDetectionLoop = useCallback(async () => {
@@ -180,7 +180,7 @@ export default function CameraScreen() {
   }, [devMode]);
 
   useEffect(() => {
-    Promise.all([loadDisplayMode().then(setDisplayMode), initDirection()]);
+    Promise.all([loadDisplayMode().then(setDisplayMode), initDirection(), initScanFrequency()]);
     return () => {
       scanningRef.current = false;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
